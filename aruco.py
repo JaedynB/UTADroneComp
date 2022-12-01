@@ -7,6 +7,7 @@
 import cv2 as cv
 from cv2 import aruco
 import numpy as np
+import time
 
 marker_dict = aruco.Dictionary_get(aruco.DICT_4X4_50)
 
@@ -35,7 +36,7 @@ while True:
             bottom_left  = corners[3].ravel()
             cv.putText(
                 frame,
-                f"ArUco ID: {ids[0]}",
+                f"id: {ids[0]}",
                 top_right,
                 cv.FONT_HERSHEY_PLAIN,
                 1.3,
@@ -44,7 +45,7 @@ while True:
                 cv.LINE_AA,
             )
             print(ids)
-            file.write(str(ids)+"\n")
+            file.write("Program identified ArUco marker " + str(ids[0]) + ". Time: " + str(time.ctime()) + "\n")
     cv.imshow("frame", frame)
     key = cv.waitKey(1)
     if key == ord("q"):
