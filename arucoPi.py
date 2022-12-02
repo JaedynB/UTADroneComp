@@ -1,7 +1,7 @@
 import cv2
-from cv2 import aruco
+import time
 import numpy as np
-
+from cv2 import aruco
 from picamera2 import Picamera2
 
 marker_dict = aruco.Dictionary_get(aruco.DICT_4X4_50)
@@ -11,8 +11,9 @@ cv2.startWindowThread()
 picam2 = Picamera2()
 picam2.configure(picam2.create_preview_configuration(main={"format": 'XRGB8888', "size": (640, 480)}))
 picam2.start()
-file = open("log.txt","w")
-
+file = open("log.txt","a")
+file.write("============= BEGIN LOG =============\n")
+#time.sleep(.1)
 while True:
     frame = picam2.capture_array()
 
@@ -34,7 +35,7 @@ while True:
             bottom_left = (corners[3][0],corners[3][1])
             cv2.putText(
                 frame,
-                f"id: {ids[0]}",
+                f"ID: {ids[0]}",
                 top_left,
                 cv2.FONT_HERSHEY_PLAIN,
                 1.3,
@@ -42,12 +43,13 @@ while True:
                 2,
                 cv2.LINE_AA,
             )
-            print(ids)
-            file.write(str(ids)+"\n")
+            output = "ID: " + str(ids[0]) + "    TIME: " + str(time.strftime("%m-%d-%y  %I:%M:%S %p",time.localtime()))
+            print(output)
+            file.write(output + "\n")
     cv2.imshow("Camera", frame)
     key = cv2.waitKey(45)
     if key == ord("q"):
         break
-    
+file.write("============== END LOG ==============\n\n")
 file.close()
 cv2.destroyAllWindows()
