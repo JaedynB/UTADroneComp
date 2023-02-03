@@ -1,5 +1,5 @@
 import time
-from   dronekit import connect, VehicleMode
+from   dronekit import connect, VehicleMode, LocationGlobalRelative
 
 # Function to arm and takeoff the drone
 def arm_and_takeoff(altitude):
