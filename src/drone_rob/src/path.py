@@ -1,13 +1,13 @@
-# Import DroneKit-Python
-from dronekit import connect, VehicleMode
+import time
+from   dronekit import connect, VehicleMode
 
 # Connect to the vehicle
 vehicle = connect('/dev/ttyUSB0', baud = 57600, wait_ready = True)
 print("Vehicle connected") # Check if vehicle is connected
 
 while vehicle.is_armable == False:
-	print('Waiting for arm checks to pass...')
-	time.sleep(1)
+    print('Waiting for arm checks to pass...')
+    time.sleep(1)
 
 # Change vehicle mode to GUIDED
 vehicle.mode = VehicleMode("GUIDED")
@@ -42,7 +42,7 @@ while True:
         print("Distance to target: ", remainingDistance)
         if remainingDistance <= 1:
             print("Reached target")
-            break;
+            break
     time.sleep(1)
 
 # Land the drone
