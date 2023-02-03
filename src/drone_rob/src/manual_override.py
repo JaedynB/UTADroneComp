@@ -11,7 +11,7 @@ def manual_override():
     # Change to GUIDED mode
     vehicle.mode  = VehicleMode("GUIDED")
     vehicle.armed = True
-    vehicle.flush()
+    vehicle.flush() # Believe this "cleans" the drone of previous instructions
 
     while True:
         # Get user input for roll, pitch, yaw, and throttle
@@ -28,12 +28,8 @@ def manual_override():
         if exit_override.lower() == 'y':
             break
 
-    # Disarm the vehicle
-    vehicle.armed = False
-    vehicle.flush()
     print("Exited manual override.")
 
-# Call the manual_override function
 manual_override()
 
 # Land the drone
