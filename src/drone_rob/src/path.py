@@ -32,10 +32,21 @@ print("Vehicle connected")
 altitude = 4
 arm_and_takeoff(altitude)
 
-# Fly the drone
-print("Flying to the desired location")
-vehicle.airspeed = 2
-vehicle.simple_goto(vehicle.location.global_frame.lat + 0.001, vehicle.location.global_frame.lon + 0.001, altitude)
+# Fly to a specified location
+destination     = vehicle.location.global_relative_frame
+destination.lat = 32.721946611134406
+destination.lon = -97.12923351297042
+vehicle.simple_goto(destination)
+
+# Wait until the drone reaches the destination
+while True:
+    if vehicle.mode.name == 'GUIDED':
+        remainingDistance = get_distance_metres(vehicle.location.global_frame, destination)
+        print("Distance to target: ", remainingDistance)
+        if remainingDistance <= 1:
+            print("Reached target")
+            break
+    time.sleep(1)
 
 # Land the drone
 vehicle.mode = VehicleMode("LAND")
