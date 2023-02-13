@@ -173,13 +173,13 @@ def arm_and_takeoff(aTargetAltitude):
             break
         time.sleep(1)
 
-        
-print('Create a new mission (for current location)')
-adds_square_mission(vehicle.location.global_frame,50)
+# This makes the vehicle fly in a square from what the original mission was I believe        
+#print('Create a new mission (for current location)')
+#adds_square_mission(vehicle.location.global_frame,20)
 
 
 # From Copter 3.3 you will be able to take off using a mission item. Plane must take off using a mission item (currently).
-arm_and_takeoff(10)
+arm_and_takeoff(5)
 
 print("Starting mission")
 # Reset mission set to first (0) waypoint
@@ -194,6 +194,7 @@ vehicle.mode = VehicleMode("AUTO")
 # Uses distance_to_current_waypoint(), a convenience function for finding the
 #   distance to the next waypoint.
 
+"""
 while True:
     nextwaypoint=vehicle.commands.next
     print('Distance to waypoint (%s): %s' % (nextwaypoint, distance_to_current_waypoint()))
@@ -205,7 +206,7 @@ while True:
         print("Exit 'standard' mission when start heading to final waypoint (5)")
         break;
     time.sleep(1)
-
+"""
 print('Return to launch')
 vehicle.mode = VehicleMode("RTL")
 
