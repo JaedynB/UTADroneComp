@@ -24,20 +24,21 @@ parser.add_argument('--connect',
                    help="vehicle connection target string. If not specified, SITL automatically started and used.")
 args = parser.parse_args()
 
-connection_string = args.connect
+connection_string = '/dev/ttyUSB0'
+#connection_string = args.connect
 sitl = None
 
-
+"""
 #Start SITL if no connection string specified
 if not connection_string:
     import dronekit_sitl
     sitl = dronekit_sitl.start_default()
     connection_string = sitl.connection_string()
-
+"""
 
 # Connect to the Vehicle
 print('Connecting to vehicle on: %s' % connection_string)
-vehicle = connect(connection_string, wait_ready=True)
+vehicle = connect(connection_string,baud=57600,wait_ready=True)
 
 
 def get_location_metres(original_location, dNorth, dEast):
@@ -186,7 +187,7 @@ print("Starting mission")
 vehicle.commands.next=0
 
 # Set mode to AUTO to start mission
-vehicle.mode = VehicleMode("AUTO")
+#vehicle.mode = VehicleMode("AUTO")
 
 
 # Monitor mission.
@@ -210,11 +211,19 @@ while True:
 print('Return to launch')
 vehicle.mode = VehicleMode("RTL")
 
+while not vehicle.mode.name== 'LOITER':
+    print("Waiting for vehicle to reach home location")
+    time.sleep(1)
+    
+# Land vehicle after it reaches it's launch point\
+vehicle.mode = VehicleMode("LAND")
 
 #Close vehicle object before exiting script
 print("Close vehicle object")
 vehicle.close()
 
+"""
 # Shut down simulator if it was started.
 if sitl is not None:
     sitl.stop()
+"""
