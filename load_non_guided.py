@@ -2,9 +2,7 @@
 # -*- coding: utf-8 -*-
 
 # https://dronekit-python.readthedocs.io/en/latest/examples/mission_basic.html
-###################################################################################
-# This file is not in a working condition. Do not run
-###################################################################################
+
 """
 © Copyright 2015-2016, 3D Robotics.
 mission_basic.py: Example demonstrating basic mission operations including creating, clearing and monitoring missions.
@@ -101,7 +99,6 @@ def download_mission():
     """
     Download the current mission from the vehicle.
     """
-    print("Downloading mission")
     cmds = vehicle.commands
     cmds.download()
     cmds.wait_ready() # wait until download is complete.
@@ -157,8 +154,8 @@ def arm_and_takeoff(aTargetAltitude):
 
         
     print("Arming motors")
-    # Copter should arm in GUIDED mode
-    vehicle.mode = VehicleMode("GUIDED")
+    # Copter should arm in STABILIZE mode
+    vehicle.mode = VehicleMode("STABILIZE")
     vehicle.armed = True
 
     while not vehicle.armed:
@@ -183,14 +180,14 @@ def arm_and_takeoff(aTargetAltitude):
 
 
 # From Copter 3.3 you will be able to take off using a mission item. Plane must take off using a mission item (currently).
-arm_and_takeoff(3)
+arm_and_takeoff(2)
 
 print("Starting mission")
 # Reset mission set to first (0) waypoint
 vehicle.commands.next=0
 
 # Set mode to AUTO to start mission
-#vehicle.mode = VehicleMode("AUTO")
+vehicle.mode = VehicleMode("AUTO")
 
 
 # Monitor mission.

@@ -1,7 +1,7 @@
 from dronekit import connect, VehicleMode, LocationGlobalRelative, APIException
 import time
 import socket
-import exceptions
+#import exceptions
 import math
 import argparse
 
@@ -17,7 +17,7 @@ def connectMyCopter():
     vehicle = connect(connection_string, baud=baud_rate, wait_ready=True)
     return vehicle
     
-def arm()
+def arm():
     while vehicle.is_armable==False:
         print("waiting for vehicle to become armable")
         time.sleep(1)

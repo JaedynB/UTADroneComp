@@ -2,9 +2,7 @@
 # -*- coding: utf-8 -*-
 
 # https://dronekit-python.readthedocs.io/en/latest/examples/mission_basic.html
-###################################################################################
-# This file is not in a working condition. Do not run
-###################################################################################
+
 """
 © Copyright 2015-2016, 3D Robotics.
 mission_basic.py: Example demonstrating basic mission operations including creating, clearing and monitoring missions.
@@ -101,7 +99,6 @@ def download_mission():
     """
     Download the current mission from the vehicle.
     """
-    print("Downloading mission")
     cmds = vehicle.commands
     cmds.download()
     cmds.wait_ready() # wait until download is complete.
@@ -183,7 +180,9 @@ def arm_and_takeoff(aTargetAltitude):
 
 
 # From Copter 3.3 you will be able to take off using a mission item. Plane must take off using a mission item (currently).
-arm_and_takeoff(3)
+arm_and_takeoff(5)
+vehicle.home_location=vehicle.location.global_frame
+take_off_point = vehicle.location.global_frame
 
 print("Starting mission")
 # Reset mission set to first (0) waypoint
@@ -213,11 +212,19 @@ while True:
 """
 print('Return to launch')
 vehicle.mode = VehicleMode("RTL")
+"""
+Use below as potential reference for obtaining distance to target waypoint
+|||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+distancetopoint = get_distance_metres(vehicle.location.global_frame, targetWaypointLocation)
+    lat = missionitem.x
+    lon = missionitem.y
+    alt = missionitem.z
+    targetWaypointLocation = LocationGlobalRelative(lat,lon,alt)
+"""
 
-while not vehicle.mode.name== 'LOITER':
-    print("Waiting for vehicle to reach home location")
+while(get_distance_metres(vehicle.location.global_frame, take_off_point) > 1):
+    print("Waiting for vehicle to reach it's launch point")
     time.sleep(1)
-    
 # Land vehicle after it reaches it's launch point\
 vehicle.mode = VehicleMode("LAND")
 
