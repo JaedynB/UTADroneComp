@@ -1,5 +1,18 @@
+# See: https://dronekit-python.readthedocs.io/en/latest/examples/simple_goto.html
+
 import time
 from   dronekit import connect, VehicleMode, LocationGlobalRelative
+
+# Returns the ground distance in metres between two LocationGlobal objects
+def get_distance_metres(aLocation1, aLocation2):
+    """
+    This method is an approximation, and will not be accurate over large distances and close to the 
+    earth's poles. It comes from the ArduPilot test code: 
+    https://github.com/diydrones/ardupilot/blob/master/Tools/autotest/common.py
+    """
+    dlat  = aLocation2.lat - aLocation1.lat
+    dlong = aLocation2.lon - aLocation1.lon
+    return math.sqrt((dlat*dlat) + (dlong*dlong)) * 1.113195e5
 
 # Function to arm and takeoff the drone
 def arm_and_takeoff(altitude):
