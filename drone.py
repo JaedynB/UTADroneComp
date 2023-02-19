@@ -1,4 +1,4 @@
-from dronekit import connect, VehicleMode, LocationGlobalRelative, APIException
+from   dronekit import connect, VehicleMode, LocationGlobalRelative, APIException
 import time
 ###################################################################################
 # This file requires the mission to have a return to launch/ landing waypoint
@@ -52,7 +52,7 @@ if vehicle.mode != 'AUTO':
     vehicle.wait_for_mode('AUTO')
     print('Mode: ', vehicle.mode)    
 print('Arming...')
-vehicle.arm() 
+vehicle.arm()
 
 if vehicle.armed == True:
     print('Armed')

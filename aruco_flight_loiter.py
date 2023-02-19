@@ -62,6 +62,7 @@ def arm_and_takeoff(aTargetAltitude):
             break
         time.sleep(1)
 
+vehicle.groundspeed(1) # 1 m/s
 arm_and_takeoff(3)
 
 print("Starting mission")
