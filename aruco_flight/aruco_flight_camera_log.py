@@ -1,7 +1,11 @@
 from   dronekit  import connect, VehicleMode, LocationGlobalRelative, APIException
 from   picamera2 import Picamera2
+from picamera2.encoders import H264Encoder
 import time
-import cv2       import aruco
+from time import sleep
+from datetime import datetime, timedelta
+import cv2
+from cv2 import aruco
 import numpy     as np
 
 ###################################################################################
@@ -16,8 +20,17 @@ param_markers = aruco.DetectorParameters_create()
 
 cv2.startWindowThread()
 picam2 = Picamera2()
+###########################################
+picam2.resolution = (640, 480)
+encoder = H264Encoder(bitrate=10000000)
+output = "test.h264"
+picam2.start_recording(encoder, output)
+time.sleep(30)
+picam2.stop_recording()
+#################################################
+
 picam2.configure(picam2.create_preview_configuration(main={"format": 'XRGB8888', "size": (640, 480)}))
-picam2.start()
+#picam2.start()
 # A list for the IDs we find
 ids_list = []
 file = open("log.txt","w")
@@ -26,7 +39,7 @@ file.write("============= BEGIN LOG =============\n")
 
 
 print('Connecting to vehicle on: ', connection_string)
-vehicle = connect(connection_string,baud=57600,wait_ready=True)
+#vehicle = connect(connection_string,baud=57600,wait_ready=True)
 print('Connected')
 
 def arm_and_takeoff(aTargetAltitude):
@@ -62,16 +75,18 @@ def arm_and_takeoff(aTargetAltitude):
             break
         time.sleep(1)
 
-vehicle.groundspeed(1) # 1 m/s
-arm_and_takeoff(3)
 
+#arm_and_takeoff(3)
+"""
 print("Starting mission")
-#if vehicle.mode != 'STABILIZE':
-#    vehicle.wait_for_mode('STABILIZE')
-#    print('Mode: ', vehicle.mode)
-if vehicle.mode != 'AUTO':
-    vehicle.wait_for_mode('AUTO')
-    print('Mode: ', vehicle.mode)    
+if vehicle.mode != 'STABILIZE':
+    vehicle.wait_for_mode('STABILIZE')
+    print('Mode: ', vehicle.mode)
+#if vehicle.mode != 'AUTO':
+#    vehicle.wait_for_mode('AUTO')
+#    print('Mode: ', vehicle.mode)    
+"""
+"""
 print('Arming...')
 vehicle.arm()
 
@@ -79,20 +94,17 @@ if vehicle.armed == True:
     print('Armed')
 else:
     print('Could not arm...')
-
+"""
 # Aruco
-while vehicle.armed == True:
+while True:
     frame = picam2.capture_array()
-
     gray_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
     marker_corners, marker_IDs, reject = aruco.detectMarkers(
         gray_frame, marker_dict, parameters=param_markers
     )
-    # Has identified a marker in the camera view
+    
     if marker_corners:
         for ids, corners in zip(marker_IDs, marker_corners):
-            """
-            # Window code
             cv2.polylines(
                 frame, [corners.astype(np.int32)], True, (0, 255, 255), 4, cv2.LINE_AA
             )
@@ -112,31 +124,23 @@ while vehicle.armed == True:
                 2,
                 cv2.LINE_AA,
             )
-            """
             # Add marker ID to a list, check if ID in list, if in list do not log again
             if ids[0] not in ids_list:
-				# Loiter drone if ID found
-				vehicle.mode = VehicleMode("LOITER")
-				#vehicle.wait_for_mode('LOITER')
-				
-				time.sleep(10)
-				
-				vehicle.mode = VehicleMode("AUTO")
-				#vehicle.wait_for_mode('AUTO')
-				
                 ids_list.append(ids[0])
                 print("ID list: " + str(ids_list))
                 output = "ID: " + str(ids[0]) + "    TIME: " + str(time.strftime("%m-%d-%y  %I:%M:%S %p",time.localtime()))
                 print(output)
                 file.write(output + "\n")
                 
-    # cv2.imshow("Camera", frame)
+    cv2.imshow("Camera", frame)
     key = cv2.waitKey(45)
 
 file.write("============== END LOG ==============\n\n")
 file.close()
 
+cv2.destroyAllWindows()
 ##############
 
 vehicle.close()
+#cv2.destroyAllWindows()
 exit()
