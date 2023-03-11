@@ -119,6 +119,8 @@ while vehicle.armed == True:
 				vehicle.mode = VehicleMode("LOITER")
 				#vehicle.wait_for_mode('LOITER')
 				
+				# Expect drone to identify the marker, then loiter in place for 10 seconds, before continuing on
+				# Through the rest of it's flight
 				time.sleep(10)
 				
 				vehicle.mode = VehicleMode("AUTO")

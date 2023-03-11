@@ -1,0 +1,7 @@
+============= BEGIN LOG =============
+Found ID: 0    TIME: 03-11-23  02:31:14 PM
+  Laser turned  on for ID: 0    TIME: 03-11-23  02:31:24 PM
+  Laser turned off for ID: 0    TIME: 03-11-23  02:31:24 PM
+Found ID: 20    TIME: 03-11-23  02:31:25 PM
+  Laser turned  on for ID: 20    TIME: 03-11-23  02:31:35 PM
+  Laser turned off for ID: 20    TIME: 03-11-23  02:31:35 PM

@@ -50,7 +50,8 @@ while True:
             cY = int((topLeft[1] + bottomRight[1]) / 2.0)
             #cv2.circle(frame, (cX, cY), 4, (0, 0, 255) -1)
             
-            cv2.putText(frame, str(markerID), (topLeft[0], topLeft[1] - 15), cv2.FONT_HERSHEY_PLAIN, 0.5, (0, 255, 0), 2)
+            cv2.polylines(frame, [corners.astype(np.int32)], True, (0, 255, 255), 4, cv2.LINE_AA)
+            cv2.putText(frame, str(markerID), (topLeft[0], topLeft[1] - 15), cv2.FONT_HERSHEY_PLAIN, 1.6 , (200, 100, 0), 2, cv2.LINE_AA)
             #print("ID: {}".format(markerID))
             
             """
@@ -72,7 +73,7 @@ while True:
             #print("markerID List: " + str(markerID_list))
                 
     cv2.imshow("Camera", frame)
-    key = cv2.waitKey(45)
+    key = cv2.waitKey(25)
     
     if key == ord("q"):
         break

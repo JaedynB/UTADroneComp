@@ -28,6 +28,7 @@ while True:
     
     if marker_corners:
         for ids, corners in zip(marker_IDs, marker_corners):
+            
             cv2.polylines(
                 frame, [corners.astype(np.int32)], True, (0, 255, 255), 4, cv2.LINE_AA
             )
@@ -47,6 +48,7 @@ while True:
                 2,
                 cv2.LINE_AA,
             )
+            
             # Add marker ID to a list, check if ID in list, if in list do not log again
             if ids[0] not in ids_list:
                 ids_list.append(ids[0])
@@ -61,4 +63,5 @@ while True:
         break
 file.write("============== END LOG ==============\n\n")
 file.close()
+# Was uncommented
 cv2.destroyAllWindows()

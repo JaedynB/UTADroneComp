@@ -50,7 +50,9 @@ print("Starting mission")
 #    print('Mode: ', vehicle.mode)
 if vehicle.mode != 'AUTO':
     vehicle.wait_for_mode('AUTO')
-    print('Mode: ', vehicle.mode)    
+    print('Mode: ', vehicle.mode)
+    
+    
 print('Arming...')
 vehicle.arm()
 
