@@ -71,9 +71,9 @@ print('Connecting to vehicle on: ', connection_string)
 vehicle = connect(connection_string,baud = 57600,wait_ready = True)
 print('Connected')
 
-"""print('Arming...')
+
+print('Arming...')
 vehicle.arm()
-"""
 
 if vehicle.armed == True:
     print('Armed')
@@ -98,14 +98,14 @@ if vehicle.mode != 'STABILIZE':
     vehicle.wait_for_mode('STABILIZE')
     print('Mode: ', vehicle.mode)
 """
-#if vehicle.mode != 'AUTO':
-#    vehicle.wait_for_mode('AUTO')
-#    print('Mode: ', vehicle.mode)
+if vehicle.mode != 'AUTO':
+    vehicle.wait_for_mode('AUTO')
+    print('Mode: ', vehicle.mode)
 
 print("\nNow looking for ArUco Markers...\n")
 
 # Aruco
-while True:
+while vehicle.armed == True:
     frame      = picam2.capture_array()
     gray_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
     
@@ -165,7 +165,7 @@ while True:
                 Expect drone to identify the marker, then loiter in place for 10 seconds, before continuing on
                   through the rest of it's flight
                 """
-                time.sleep(10)
+                time.sleep(5)
                 
                 # Turn the laser on
                 msg = vehicle.message_factory.command_long_encode(

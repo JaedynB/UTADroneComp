@@ -1,0 +1,15 @@
+MANIFEST.in
+README
+_prctlmodule.c
+prctl.py
+securebits.h
+setup.cfg
+setup.py
+test_prctl.py
+docs/Makefile
+docs/conf.py
+docs/index.rst
+python_prctl.egg-info/PKG-INFO
+python_prctl.egg-info/SOURCES.txt
+python_prctl.egg-info/dependency_links.txt
+python_prctl.egg-info/top_level.txt

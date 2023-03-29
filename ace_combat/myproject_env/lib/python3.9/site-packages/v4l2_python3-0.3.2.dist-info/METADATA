@@ -1,0 +1,21 @@
+Metadata-Version: 2.1
+Name: v4l2-python3
+Version: 0.3.2
+Summary: Python bindings for the v4l2 userspace api.
+Home-page: https://pypi.org/project/v4l2-python3/
+Maintainer: Raspberry Pi Foundation
+Maintainer-email: web@raspberrypi.org
+License: GPLv2
+Keywords: v4l2 video4linux video4linux2 binding ctypes
+Classifier: Development Status :: 4 - Beta
+Classifier: Intended Audience :: Developers
+Classifier: License :: OSI Approved :: GNU General Public License (GPL)
+Classifier: Operating System :: POSIX :: Linux
+Classifier: Programming Language :: C
+Classifier: Programming Language :: Python
+Classifier: Topic :: Multimedia :: Video
+Classifier: Topic :: Multimedia :: Video :: Capture
+Requires: ctypes
+License-File: LICENSE
+License-File: AUTHORS
+
