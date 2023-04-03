@@ -73,7 +73,7 @@ class UGVHitListener(irc.client.SimpleIRCClient):
         # Set the bot's initial connection status to False and the current aruco_id to None
         self.connected = False
         self.aruco_id  = None
-        self.markerID  = markerID
+        self.markerID  = None
 
         # Set up a list to keep track of UGV_Hit messages received in the last 10 seconds
         self.hit_messages = []
