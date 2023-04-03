@@ -206,19 +206,19 @@ param_markers = aruco.DetectorParameters_create()
 markerID_list     = [42]
 friendly_detected = False
 
-#arm_and_takeoff(3)
+arm_and_takeoff(3)
 
 print("Starting mission")
 
-#"""
+"""
 if vehicle.mode != 'STABILIZE':
     vehicle.wait_for_mode('STABILIZE')
     print('Mode: ', vehicle.mode)
-#"""
+"""
 
-#if vehicle.mode != 'AUTO':
-#    vehicle.wait_for_mode('AUTO')
-#    print('Mode: ', vehicle.mode)
+if vehicle.mode != 'AUTO':
+    vehicle.wait_for_mode('AUTO')
+    print('Mode: ', vehicle.mode)
 
 print("\nNow looking for ArUco Markers...\n")
 
@@ -280,14 +280,14 @@ while True:
                 file.write(output + "\n")
                 
                 # Loiter drone if ID found
-                ###vehicle.mode = VehicleMode("LOITER")
-                #vehicle.wait_for_mode('LOITER')
+                vehicle.mode = VehicleMode("LOITER")
+                vehicle.wait_for_mode('LOITER')
 
                 """
                 Expect drone to identify the marker, then loiter in place for 10 seconds, before continuing on
                   through the rest of it's flight
                 """
-                #time.sleep(10)
+                time.sleep(5)
                 
                 # Turn the laser on
                 msg = vehicle.message_factory.command_long_encode(
@@ -355,9 +355,8 @@ while True:
                         print("Found {}".format(listener.aruco_id))
                         markerID_list.append(markerID)
                         print("Added {} to list".format(listener.aruco_id))
-                        
 
-                ####vehicle.mode = VehicleMode("AUTO")
+                vehicle.mode = VehicleMode("AUTO")
                 
     #cv2.imshow("Camera", frame)
     #key = cv2.waitKey(25)
