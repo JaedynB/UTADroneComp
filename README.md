@@ -13,6 +13,7 @@ This is a repository containing the Raytheon Drone Competition's software. Curre
 Software development team lead Javier Lopez serves as the point of contact.
 
 ## Compile Instructions
+***We are using Python version 3.9***
 1. Download project into a directory on your system
 2. Make sure the right Python packages are installed (opencv-python, opencv-contrib-python, picamera2, irc)
    If you do not have them, use the following commands in Linux:
