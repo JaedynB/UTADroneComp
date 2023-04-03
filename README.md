@@ -6,6 +6,8 @@
   * [About the Project](#about-the-project)
   * [Compile Instructions](#compile-instructions)
   * [Detailed Code Description](#detailed-code-description)
+  * [Demo Video - Manual Flight With IRC Feedback Loop](#demo-video---manual-flight-with-irc-feedback-loop)
+  * [Demo Video - Autonomous Flight](#demo-video---autonomous-flight)
 
 ## About the Project
 This is a repository containing the Raytheon Drone Competition's software. Currently, Robert Carr, Ja'lun Morris, Jaedyn Brown, Pearl Iyayi, and Javier Lopez make up the software development team.
@@ -13,6 +15,7 @@ This is a repository containing the Raytheon Drone Competition's software. Curre
 Software development team lead Javier Lopez serves as the point of contact.
 
 ## Compile Instructions
+***We are using Python version 3.9***
 1. Download project into a directory on your system
 2. Make sure the right Python packages are installed (opencv-python, opencv-contrib-python, picamera2, irc)
    If you do not have them, use the following commands in Linux:
@@ -43,3 +46,9 @@ If any markers are detected in a frame, their ID is extracted and added to a lis
 The loop runs while the drone is armed, the drone will loiter if a marker is detected. Once the drone loiters over the marker it shoots an LED laser at the UGV receiver and then receives the hit confirmation from UGV through IRC communication. Once it gets the hit confirmation the drone will continue to look for other vehicles it has not received hit confirmations from.
 
 In summary, this code is designed to detect specific ArUco markers in a video stream and use their detection to trigger a drone-mounted laser. The code logs a message to a file for each new marker detection, but does not log subsequent detections of the same marker ID.
+
+# Demo Video - Manual Flight With IRC Feedback Loop
+Here is a demo video with a manual flight: https://www.youtube.com/watch?v=IvB1tbqpzJI
+
+# Demo Video - Autonomous Flight
+Here is a demo video of the drone performing an autonomous flight path: https://youtu.be/IlCi6t3tb7U
