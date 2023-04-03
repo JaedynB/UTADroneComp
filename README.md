@@ -51,4 +51,4 @@ In summary, this code is designed to detect specific ArUco markers in a video st
 Here is a demo video with a manual flight: https://www.youtube.com/watch?v=IvB1tbqpzJI
 
 # Demo Video - Autonomous Flight
-Here is a demo video of the drone performing an autonomous flight path: https://youtu.be/IlCi6t3tb7U
+Here is a demo video of the drone performing an autonomous flight path: https://www.youtube.com/watch?v=IlCi6t3tb7U
