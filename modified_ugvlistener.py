@@ -314,6 +314,8 @@ while vehicle.armed == True:
                                                 IRC Bot Interaction
                 ------------------------------------------------------------------------------------
                 """
+                # Try to give the listener the current marker ID it is looking at -----------------------------------------------------------
+                listener.markerID = markerID
 
                 # Pull GPS Coordinates latitude and longitude from Mavlink stream
                 lat  = vehicle.location.global_relative_frame.lat
@@ -333,7 +335,6 @@ while vehicle.armed == True:
 
                 # Check to see if the aruco ID from IRC is the same as the current marker
                 #   If it is, add it to the list so we do not shoot at it again
-                #if listener.aruco_id != None and str(markerID) not in markerID_list:
                 if listener.aruco_id != None and int(markerID) not in markerID_list:
                     print("Here inside the bot check loop.")
                     if int(listener.aruco_id) == int(markerID):
