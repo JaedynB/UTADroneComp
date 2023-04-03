@@ -75,7 +75,7 @@ class UGVHitListener(irc.client.SimpleIRCClient):
         self.markerID  = None
 
         # Set up a list to keep track of UGV_Hit messages received in the last 10 seconds
-        self.hit_messages = []
+        #self.hit_messages = []
 
         # Connect the bot to the server and join the channel
         self.connect(self.server, 6667, "UGV_HitListener")
