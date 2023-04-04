@@ -18,12 +18,12 @@ Software development team lead Javier Lopez serves as the point of contact.
 ***We are using Python version 3.9***
 1. Download project into a directory on your system
 2. Make sure the right Python packages are installed (opencv-python, opencv-contrib-python, picamera2, irc)
-   If you do not have them, use the following commands in Linux:
+   If you do not have them, use the following commands in Linux (some of these will take 1-2 hours or more to install and build):
    1. Python3.9 -m pip install opencv-python
    2. Python3.9 -m pip install opencv-contrib-python
    3. Python3.9 -m pip install picamera2
    4. Python3.9 -m pip install irc
-3. To run in a virtual environment (when virtual environment folder):
+3. To run in a virtual environment (when in the virtual environment folder):
    1. source myproject_env/bin/activate
    2. python3.9 irc_drone.py
 4. To exit the virtual environment:
