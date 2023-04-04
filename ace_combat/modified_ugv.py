@@ -108,36 +108,14 @@ class UGVHitListener(irc.client.SimpleIRCClient):
             gps_location  = parts[3]
 
             current_time     = datetime.now()
-            date_time_object = datetime.strptime(time_stamp, "%m-%d-%Y %H:%M:%S")
+            date_time_object = datetime.strptime(time_stamp, "%m-%d-%Y %H:%M:%S") # This format matters, maybe look at getting the time from the IRC server message
 
             # Check if the message was received in the last set amount of time in seconds
             if current_time - date_time_object <= timedelta(seconds = 20):
-                # Add the message to the hit_messages list
+                # Add the arucoID to self.aruco_id if all these requirements are met
                 self.aruco_id = aruco_id
                 print(f"Received hit confirmation for markerID {self.markerID} at time {time_stamp} and location {gps_location}")
 
-        """
-        # Check if any hit messages in hit_messages list are older than 10 seconds
-        for message in self.hit_messages:
-            # Remove the UGV_Hit part of the received message so it is easier to split
-            new_message = message.replace("RTXDC_2023 ", "").replace("UGV_Hit_", "")
-
-            # Split the message into parts and extract the required information
-            parts        = new_message.split("_")
-            time_stamp   = parts[2]
-            
-            current_time     = datetime.now()
-            date_time_object = datetime.strptime(time_stamp, "%m-%d-%Y %H:%M:%S")
-
-            print("Current Time in message removal: " + str(current_time))
-            print("Current message date time object: " + str(date_time_object))
-
-            if current_time - date_time_object > timedelta(seconds = 120):
-                # Remove the message from the hit_messages list
-                print("Message removed: " + message)
-                self.hit_messages.remove(message)
-        """
-                
 # Create a function to run the IRC bot in a separate thread
 def run_bot(bot):
     bot.start()
