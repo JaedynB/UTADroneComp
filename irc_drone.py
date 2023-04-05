@@ -12,38 +12,48 @@ import logging
 import irc.client
 import irc.bot
 import threading
-import datetime
 
 ###################################################################################
 # This file requires the mission to have a return to launch/landing waypoint
 ###################################################################################
 
 """
-    @brief: UAVBot is an IRC bot that joins the IRC server and sends messages
-                when the drone fires its laser. The message contains all the
-                content required by Raytheon
+    @brief: IRCBot inherits from the irc.client.SimpleIRCClient class. It represents a
+                basic template for creating an IRC bot, which connects to an IRC server
+                and a specified channel. Both UAVBot and UGVHitListener inherrit from
+                this class
 """
-class UAVBot(irc.client.SimpleIRCClient):
-    def __init__(self):
+class IRCBot(irc.client.SimpleIRCClient):
+    def __init__(self, bot_name, server, channel):
         # Initialize the bot by connecting to the IRC server and joining the channel
         irc.client.SimpleIRCClient.__init__(self)
 
         # Set the server and channel information
-        self.server  = "irc.libera.chat"
-        self.channel = "#RTXDrone"
+        self.server  = server
+        self.channel = channel
 
         # Set the bot's initial connection status to False
         self.connected = False
 
         # Connect the bot to the server and join the channel
-        self.connect(self.server, 6667, "UTA_UAVBot")
+        self.connect(self.server, 6667, bot_name)
         self.connection.join(self.channel)
 
     def on_welcome(self, connection, event):
         # When the bot successfully joins the channel, set its connection status to True
         connection.join(self.channel)
         self.connected = True
-        print("UAVBot connected to {} and joined {}".format(self.server, self.channel))
+        print("{} connected to {} and joined {}".format(self.__class__.__name__, self.server, self.channel))
+
+"""
+    @brief: UAVBot is an IRC bot that joins the IRC server and sends messages
+                when the drone fires its laser. The message contains all the
+                content required by Raytheon
+"""
+class UAVBot(IRCBot):
+    def __init__(self):
+        # Call the parent constructor to connect to the IRC server and join the channel
+        IRCBot.__init__(self, "UTA_UAVBot", "irc.libera.chat", "#RTXDrone")
 
     # Send fire message to channel
     def send_fire_message(self, team_name, aruco_id, time, location):
@@ -61,47 +71,41 @@ class UAVBot(irc.client.SimpleIRCClient):
                 finds a message, it then takes it and gets the ArUco ID of the
                 vehicle that said it was hit
 """
-class UGVHitListener(irc.client.SimpleIRCClient):
+class UGVHitListener(IRCBot):
     def __init__(self):
-        # Initialize the bot by connecting to the IRC server and joining the channel
-        irc.client.SimpleIRCClient.__init__(self)
+        # Call the parent constructor to connect to the IRC server and join the channel
+        IRCBot.__init__(self, "UGV_HitListener", "irc.libera.chat", "#RTXDrone")
 
-        # Set the server and channel information
-        self.server  = "irc.libera.chat"
-        self.channel = "#RTXDrone"
-
-        # Set the bot's initial connection status to False and the current aruco_id to None
-        self.connected = False
         self.aruco_id  = None
-
-        # Connect the bot to the server and join the channel
-        self.connect(self.server, 6667, "UGV_HitListener")
-        self.connection.join(self.channel)
-
-    def on_welcome(self, connection, event):
-        # When the bot successfully joins the channel, set its connection status to True
-        connection.join(self.channel)
-        self.connected = True
-        print("UGVHitListener connected to {} and joined {}".format(self.server, self.channel))
+        self.markerID  = None
 
     # This will constantly listen for public messages sent in the channel
     def on_pubmsg(self, connection, event):
+        # Message format: RTXDC_2023 UTA_UGV_Hit_134_04-03-2023 11:38:57_0.0_0.0
+
         # Parse incoming message and extract hit information
         message = event.arguments[0]
 
-        # TODO: Maybe look at a way to make this search for only the string containing the
-        #       ID we are currently shooting at
-        if "_UGV_Hit_" in message:
+        # Only look at messages in the server that contain the ID of the vehicle we are currently looking at
+        if f"_UGV_Hit_{self.markerID}" in message:
             # Remove the UGV_Hit part of the received message so it is easier to split
             new_message = message.replace("RTXDC_2023 ", "").replace("UGV_Hit_", "")
 
             # Split the message into parts and extract the required information
             parts         = new_message.split("_")
-            self.aruco_id = parts[1]
+            #self.aruco_id = parts[1]
+            aruco_id      = parts[1]
             time_stamp    = parts[2]
             gps_location  = parts[3]
-            print("Received hit confirmation for aruco_id {} at time {} and location {}".format(self.aruco_id, time_stamp, gps_location))
-            # TODO: If this runs continuously, is there any way to check the messages after we fire?
+
+            current_time     = datetime.now()
+            date_time_object = datetime.strptime(time_stamp, "%m-%d-%Y %H:%M:%S") # This format matters, maybe look at getting the time from the IRC server message
+
+            # Check if the message was received in the last set amount of time in seconds
+            if current_time - date_time_object <= timedelta(seconds = 20):
+                # Add the arucoID to self.aruco_id if all these requirements are met
+                self.aruco_id = aruco_id
+                print(f"Received hit confirmation for markerID {self.markerID} at time {time_stamp} and location {gps_location}")
 
 # Create a function to run the IRC bot in a separate thread
 def run_bot(bot):
@@ -118,6 +122,7 @@ logging.getLogger().addHandler(console_handler) # Add the console logging handle
 logging.getLogger().setLevel(logging.WARNING)   # Set the root logger's level to warnings and above
 
 # Initializing PiCamera2 object with main preview configuration set to XRGB8888 format and 640x480 resolution
+picam2 = Picamera2(verbose_console=0)
 picam2.configure(picam2.create_preview_configuration(main = {"format": 'XRGB8888', "size": (640, 480)}))
 picam2.start()
 
@@ -152,17 +157,21 @@ vehicle = connect(connection_string,baud = 57600, wait_ready = True)
 # Print a message indicating that the program has successfully connected to the drone
 print('Connected')
 
+"""
 # Arm the drone
 print('Arming...')
 vehicle.arm()
+"""
 
 # Check if the drone has been armed. If it has, print a message indicating that the drone has been armed
 #   If it has not, print a message indicating that the drone could not be armed
+"""
 if vehicle.armed == True:
     print('Armed')
 else:
     print('Could not arm...')
-
+"""
+    
 file = open("log_marker_flight.txt","w")              # Create a new text file to log data to
 file.write("============= BEGIN LOG =============\n") # Write a line to the file to indicate the start of the log
 
@@ -174,13 +183,12 @@ detector      = cv2.aruco.ArucoDetector(marker_dict, param_markers)        # Cre
 markerID_list = []
 
 #arm_and_takeoff(3)
-
+"""
 print("Starting mission")
-
 if vehicle.mode != 'STABILIZE':
     vehicle.wait_for_mode('STABILIZE')
     print('Mode: ', vehicle.mode)
-
+"""
 """
 if vehicle.mode != 'AUTO':
     vehicle.wait_for_mode('AUTO')
@@ -189,8 +197,12 @@ if vehicle.mode != 'AUTO':
 
 print("\nNow looking for ArUco Markers...\n")
 
+cur_time = datetime.now()
+print(str(cur_time))
+
 # While the vehicle is armed, look for and shoot at markers
-while vehicle.armed == True:
+#while vehicle.armed == True:
+while True:
     frame      = picam2.capture_array()
     gray_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
     
@@ -297,6 +309,9 @@ while vehicle.armed == True:
                                                 IRC Bot Interaction
                 ------------------------------------------------------------------------------------
                 """
+                # Try to give the listener the current marker ID it is looking at -----------------------------------------------------------
+                listener.markerID = markerID
+                print("listener.markerID = " + str(listener.markerID))
 
                 # Pull GPS Coordinates latitude and longitude from Mavlink stream
                 lat  = vehicle.location.global_relative_frame.lat
@@ -305,7 +320,7 @@ while vehicle.armed == True:
                 # Write GPS part of string message, convert GPS coords to strings so it can be encoded 
                 location     = str(lat) + '_' + str(lon)
                 team_name    = "UTA"
-                current_time = datetime.datetime.now()
+                current_time = datetime.now()
 
                 # Send fire message to server
                 uav_bot.send_fire_message(team_name, str(markerID), current_time, location)
@@ -316,7 +331,6 @@ while vehicle.armed == True:
 
                 # Check to see if the aruco ID from IRC is the same as the current marker
                 #   If it is, add it to the list so we do not shoot at it again
-                #if listener.aruco_id != None and str(markerID) not in markerID_list:
                 if listener.aruco_id != None and int(markerID) not in markerID_list:
                     print("Here inside the bot check loop.")
                     if int(listener.aruco_id) == int(markerID):
