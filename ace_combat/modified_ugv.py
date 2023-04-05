@@ -18,31 +18,42 @@ import threading
 ###################################################################################
 
 """
-    @brief: UAVBot is an IRC bot that joins the IRC server and sends messages
-                when the drone fires its laser. The message contains all the
-                content required by Raytheon
+    @brief: IRCBot inherits from the irc.client.SimpleIRCClient class. It represents a
+                basic template for creating an IRC bot, which connects to an IRC server
+                and a specified channel. Both UAVBot and UGVHitListener inherit from
+                this class
 """
-class UAVBot(irc.client.SimpleIRCClient):
-    def __init__(self):
+class IRCBot(irc.client.SimpleIRCClient):
+    def __init__(self, bot_name, server, channel):
         # Initialize the bot by connecting to the IRC server and joining the channel
         irc.client.SimpleIRCClient.__init__(self)
 
         # Set the server and channel information
-        self.server  = "irc.libera.chat"
-        self.channel = "#RTXDrone"
+        self.server  = server
+        self.channel = channel
 
         # Set the bot's initial connection status to False
         self.connected = False
 
         # Connect the bot to the server and join the channel
-        self.connect(self.server, 6667, "UTA_UAVBot")
+        self.connect(self.server, 6667, bot_name)
         self.connection.join(self.channel)
 
     def on_welcome(self, connection, event):
         # When the bot successfully joins the channel, set its connection status to True
         connection.join(self.channel)
         self.connected = True
-        print("UAVBot connected to {} and joined {}".format(self.server, self.channel))
+        print("{} connected to {} and joined {}".format(self.__class__.__name__, self.server, self.channel))
+
+"""
+    @brief: UAVBot is an IRC bot that joins the IRC server and sends messages
+                when the drone fires its laser. The message contains all the
+                content required by Raytheon
+"""
+class UAVBot(IRCBot):
+    def __init__(self):
+        # Call the parent constructor to connect to the IRC server and join the channel
+        IRCBot.__init__(self, "UTA_UAVBot", "irc.libera.chat", "#RTXDrone")
 
     # Send fire message to channel
     def send_fire_message(self, team_name, aruco_id, time, location):
@@ -60,32 +71,13 @@ class UAVBot(irc.client.SimpleIRCClient):
                 finds a message, it then takes it and gets the ArUco ID of the
                 vehicle that said it was hit
 """
-class UGVHitListener(irc.client.SimpleIRCClient):
+class UGVHitListener(IRCBot):
     def __init__(self):
-        # Initialize the bot by connecting to the IRC server and joining the channel
-        irc.client.SimpleIRCClient.__init__(self)
+        # Call the parent constructor to connect to the IRC server and join the channel
+        IRCBot.__init__(self, "UGV_HitListener", "irc.libera.chat", "#RTXDrone")
 
-        # Set the server and channel information
-        self.server  = "irc.libera.chat"
-        self.channel = "#RTXDrone"
-
-        # Set the bot's initial connection status to False and the current aruco_id to None
-        self.connected = False
-        self.aruco_id  = None
-        self.markerID  = None
-
-        # Set up a list to keep track of UGV_Hit messages received in the last 10 seconds
-        #self.hit_messages = []
-
-        # Connect the bot to the server and join the channel
-        self.connect(self.server, 6667, "UGV_HitListener")
-        self.connection.join(self.channel)
-
-    def on_welcome(self, connection, event):
-        # When the bot successfully joins the channel, set its connection status to True
-        connection.join(self.channel)
-        self.connected = True
-        print("UGVHitListener connected to {} and joined {}".format(self.server, self.channel))
+        self.aruco_id  = None # The aruco_id from the server
+        self.markerID  = None # The marker ID the drone is currently looking at
 
     # This will constantly listen for public messages sent in the channel
     def on_pubmsg(self, connection, event):
@@ -94,15 +86,13 @@ class UGVHitListener(irc.client.SimpleIRCClient):
         # Parse incoming message and extract hit information
         message = event.arguments[0]
 
-        # TODO: Maybe look at a way to make this search for only the string containing the
-        #       ID we are currently shooting at
+        # Only look at messages in the server that contain the ID of the vehicle we are currently looking at
         if f"_UGV_Hit_{self.markerID}" in message:
             # Remove the UGV_Hit part of the received message so it is easier to split
             new_message = message.replace("RTXDC_2023 ", "").replace("UGV_Hit_", "")
 
             # Split the message into parts and extract the required information
             parts         = new_message.split("_")
-            #self.aruco_id = parts[1]
             aruco_id      = parts[1]
             time_stamp    = parts[2]
             gps_location  = parts[3]
@@ -111,7 +101,7 @@ class UGVHitListener(irc.client.SimpleIRCClient):
             date_time_object = datetime.strptime(time_stamp, "%m-%d-%Y %H:%M:%S") # This format matters, maybe look at getting the time from the IRC server message
 
             # Check if the message was received in the last set amount of time in seconds
-            if current_time - date_time_object <= timedelta(seconds = 20):
+            if current_time - date_time_object <= timedelta(seconds = 3):
                 # Add the arucoID to self.aruco_id if all these requirements are met
                 self.aruco_id = aruco_id
                 print(f"Received hit confirmation for markerID {self.markerID} at time {time_stamp} and location {gps_location}")
@@ -194,7 +184,6 @@ markerID_list = []
 #arm_and_takeoff(3)
 """
 print("Starting mission")
-
 if vehicle.mode != 'STABILIZE':
     vehicle.wait_for_mode('STABILIZE')
     print('Mode: ', vehicle.mode)
