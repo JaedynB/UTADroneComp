@@ -10,35 +10,32 @@ import numpy              as     np
 import time
 import cv2
 import logging
-import irc.client
-import irc.bot
 import threading
 import datetime
 
-connection_string = '/dev/ttyUSB0'
+connection_string = "/dev/ttyUSB0"
 
-print('Connecting to vehicle on: ', connection_string)
-vehicle = connect(connection_string,baud = 57600,wait_ready = True)
-print('Connected')
+print("Connecting to vehicle on: ", connection_string)
+vehicle = connect(connection_string, baud = 57600, wait_ready = True)
+print("Connected")
 
 
 #"""
-print('Arming...')
+print("Arming...")
 vehicle.arm()
 
 
 if vehicle.armed == True:
     print('Armed')
 else:
-    print('Could not arm...')
+    print("Could not arm...")
 #"""
 
 # Set vehicle mode to GUIDED and arm the drone
 vehicle.mode = VehicleMode("GUIDED")
-vehicle.armed = True
 
 # Wait for the vehicle to arm and enter GUIDED mode
-while not vehicle.mode.name=='GUIDED' and not vehicle.armed:
+while not vehicle.mode.name == "GUIDED" and not vehicle.armed:
     print("Waiting for drone to arm and enter GUIDED mode...")
     time.sleep(1)
 
