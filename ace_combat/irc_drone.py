@@ -176,7 +176,7 @@ vehicle = connect(connection_string,baud = 57600,wait_ready = True)
 print('Connected')
 
 
-#"""
+
 print('Arming...')
 vehicle.arm()
 
@@ -185,7 +185,7 @@ if vehicle.armed == True:
     print('Armed')
 else:
     print('Could not arm...')
-#"""
+
 
 file = open("log_marker_flight.txt","w")
 file.write("============= BEGIN LOG =============\n")
@@ -203,30 +203,29 @@ param_markers = aruco.DetectorParameters_create()
 """
 
 # A list for the IDs we find
-markerID_list     = [42]
+markerID_list     = []
 friendly_detected = False
 
 #arm_and_takeoff(3)
 
 print("Starting mission")
 
-#"""
+"""
 if vehicle.mode != 'STABILIZE':
     vehicle.wait_for_mode('STABILIZE')
     print('Mode: ', vehicle.mode)
-#"""
-
-#if vehicle.mode != 'AUTO':
-#    vehicle.wait_for_mode('AUTO')
-#    print('Mode: ', vehicle.mode)
+"""
+if vehicle.mode != 'AUTO':
+    vehicle.wait_for_mode('AUTO')
+    print('Mode: ', vehicle.mode)
 
 print("\nNow looking for ArUco Markers...\n")
 
 # Aruco
-while True:
+while vehicle.armed == True:
     frame      = picam2.capture_array()
     gray_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-    
+
     (corners, ids, rejected) = aruco.detectMarkers(
         gray_frame,
         marker_dict,
@@ -316,6 +315,9 @@ while True:
                 )
 
                 vehicle.send_mavlink(msg)
+
+                # Sound buzzer when firing. Plays a single C note
+                # vehicle.play_tune(bytes('C','utf-8'))
 
                 output = "  Laser turned off for ID: " + str(markerID) + "    TIME: " + str(time.strftime("%m-%d-%y  %I:%M:%S %p",time.localtime()))
                 print(output)

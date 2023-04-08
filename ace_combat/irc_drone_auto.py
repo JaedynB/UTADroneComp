@@ -176,7 +176,7 @@ vehicle = connect(connection_string,baud = 57600,wait_ready = True)
 print('Connected')
 
 
-#"""
+
 print('Arming...')
 vehicle.arm()
 
@@ -185,7 +185,7 @@ if vehicle.armed == True:
     print('Armed')
 else:
     print('Could not arm...')
-#"""
+
 
 file = open("log_marker_flight.txt","w")
 file.write("============= BEGIN LOG =============\n")
@@ -267,12 +267,12 @@ while True:
             cv2.putText(frame, str(markerID), (topLeft[0], topLeft[1] - 15), cv2.FONT_HERSHEY_PLAIN, 1.6 , (200, 100, 0), 2, cv2.LINE_AA)
             """
             
-            if int(markerID) == 14 and friendly_detected == False:
+            if int(markerID) == 42 and friendly_detected == False:
                 friendly_detected = True
                 print("Friendly detected: ID: " + str(markerID))
             
             # Add marker ID to a list, check if ID in list, if in list do not log again
-            if markerID not in markerID_list and (int(markerID) != 14):
+            if markerID not in markerID_list and (int(markerID) != 42):
                 
                 #print("ID list: " + str(markerID_list))
                 output = "Found ID: " + str(markerID) + "    TIME: " + str(time.strftime("%m-%d-%y  %I:%M:%S %p",time.localtime()))
@@ -280,14 +280,14 @@ while True:
                 file.write(output + "\n")
                 
                 # Loiter drone if ID found
-                vehicle.mode = VehicleMode("LOITER")
-                vehicle.wait_for_mode('LOITER')
+                # vehicle.mode = VehicleMode("LOITER")
+                # vehicle.wait_for_mode('LOITER')
 
                 """
                 Expect drone to identify the marker, then loiter in place for 10 seconds, before continuing on
                   through the rest of it's flight
                 """
-                time.sleep(5)
+                # time.sleep(5)
                 
                 # Turn the laser on
                 msg = vehicle.message_factory.command_long_encode(
@@ -316,6 +316,9 @@ while True:
                 )
 
                 vehicle.send_mavlink(msg)
+                
+                # Sound buzzer when firing. Plays a single C note
+                vehicle.play_tune(bytes('C','utf-8'))
 
                 output = "  Laser turned off for ID: " + str(markerID) + "    TIME: " + str(time.strftime("%m-%d-%y  %I:%M:%S %p",time.localtime()))
                 print(output)
@@ -356,7 +359,7 @@ while True:
                         markerID_list.append(markerID)
                         print("Added {} to list".format(listener.aruco_id))
 
-                vehicle.mode = VehicleMode("AUTO")
+                # vehicle.mode = VehicleMode("AUTO")
                 
     #cv2.imshow("Camera", frame)
     #key = cv2.waitKey(25)

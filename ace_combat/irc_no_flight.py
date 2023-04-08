@@ -118,6 +118,7 @@ list_check = [1, 15, 23, 50, 65]
 # Listen for message until the program is ended
 while True:
     time.sleep(1)
+    vehicle.play_tune("AAAA")
     #print(listener.aruco_id)
     if listener.aruco_id != None and list_check not in id_list:
         #print("Here!")

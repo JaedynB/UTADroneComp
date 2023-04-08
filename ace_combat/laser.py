@@ -71,7 +71,7 @@ print('Connecting to vehicle on: ', connection_string)
 vehicle = connect(connection_string,baud = 57600,wait_ready = True)
 print('Connected')
 
-
+"""
 print('Arming...')
 vehicle.arm()
 
@@ -79,6 +79,7 @@ if vehicle.armed == True:
     print('Armed')
 else:
     print('Could not arm...')
+"""
 
 file = open("log_marker_flight.txt","w")
 file.write("============= BEGIN LOG =============\n")
@@ -108,6 +109,8 @@ print("\nNow looking for ArUco Markers...\n")
 while vehicle.armed == True:
     frame      = picam2.capture_array()
     gray_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+
+    vehicle.play_tune("AAAA")
     
     (corners, ids, rejected) = aruco.detectMarkers(
         gray_frame,

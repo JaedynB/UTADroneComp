@@ -6,7 +6,7 @@ from   pymavlink          import mavutil
 from   time               import sleep
 from   datetime           import datetime, timedelta
 from   cv2                import aruco
-import numpy              as     np
+import numpy              as np
 import time
 import cv2
 import logging
@@ -53,36 +53,36 @@ if vehicle.mode != 'STABILIZE':
 #    vehicle.wait_for_mode('AUTO')
 #    print('Mode: ', vehicle.mode)
 
-                """
-                Expect drone to identify the marker, then loiter in place for 10 seconds, before continuing on
-                  through the rest of it's flight
-                """
-                #time.sleep(10)
-                
-                # Turn the laser on
-                msg = vehicle.message_factory.command_long_encode(
-                    0,0,
-                    mavutil.mavlink.MAV_CMD_DO_SET_SERVO,0,
-                    6,    # Channel
-                    1900, # PWM, between 1100 - 1900
-                    0,0,0,0,0       
-                )
+                    """
+                    Expect drone to identify the marker, then loiter in place for 10 seconds, before continuing on
+                    through the rest of it's flight
+                    """
+                    #time.sleep(10)
+                    
+                    # Turn the laser on
+                    msg = vehicle.message_factory.command_long_encode(
+                        0,0,
+                        mavutil.mavlink.MAV_CMD_DO_SET_SERVO,0,
+                        6,    # Channel
+                        1900, # PWM, between 1100 - 1900
+                        0,0,0,0,0       
+                    )
 
-                vehicle.send_mavlink(msg)
-                output = "  Laser turned  on for ID: " + str(markerID) + "    TIME: " + str(time.strftime("%m-%d-%y  %I:%M:%S %p",time.localtime()))
-                print(output)
-                file.write(output + "\n")
-                
-                # This time.sleep influences how long the laser is on
-                time.sleep(0.5)
+                    vehicle.send_mavlink(msg)
+                    output = "  Laser turned  on for ID: " + str(markerID) + "    TIME: " + str(time.strftime("%m-%d-%y  %I:%M:%S %p",time.localtime()))
+                    print(output)
+                    file.write(output + "\n")
+                    
+                    # This time.sleep influences how long the laser is on
+                    time.sleep(0.5)
 
-                # Turn the laser off
-                msg = vehicle.message_factory.command_long_encode(
-                    0,0,
-                    mavutil.mavlink.MAV_CMD_DO_SET_SERVO,0,
-                    6,    # Channel
-                    0,    # PWM, between 1100 - 1900
-                    0,0,0,0,0       
-                )
+                    # Turn the laser off
+                    msg = vehicle.message_factory.command_long_encode(
+                        0,0,
+                        mavutil.mavlink.MAV_CMD_DO_SET_SERVO,0,
+                        6,    # Channel
+                        0,    # PWM, between 1100 - 1900
+                        0,0,0,0,0       
+                    )
 
-                vehicle.send_mavlink(msg)
+                    vehicle.send_mavlink(msg)
