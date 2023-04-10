@@ -209,7 +209,7 @@ print('Connecting to vehicle on: ', connection_string)
 vehicle = connect(connection_string,baud = 57600,wait_ready = True)
 print('Connected')
 
-"""
+
 print('Arming...')
 vehicle.arm()
 
@@ -217,7 +217,21 @@ if vehicle.armed == True:
     print('Armed')
 else:
     print('Could not arm...')
+
+#arm_and_takeoff(6)
+
 """
+if vehicle.mode != 'STABILIZE':
+    vehicle.wait_for_mode('STABILIZE')
+    print('Mode: ', vehicle.mode)
+"""
+
+if vehicle.mode != 'AUTO':
+    vehicle.wait_for_mode('AUTO')
+    print('Mode: ', vehicle.mode)
+
+
+print("Starting mission")
     
 file = open("log_marker_flight.txt","w")
 file.write("============= BEGIN LOG =============\n")
@@ -230,21 +244,6 @@ detector      = cv2.aruco.ArucoDetector(marker_dict, param_markers)
 # A list for the IDs we find
 markerID_list     = [42]    # UTA Oficial ID: 42
 friendly_detected = False
-
-#arm_and_takeoff(6)
-
-print("Starting mission")
-
-"""
-if vehicle.mode != 'STABILIZE':
-    vehicle.wait_for_mode('STABILIZE')
-    print('Mode: ', vehicle.mode)
-"""
-"""
-if vehicle.mode != 'AUTO':
-    vehicle.wait_for_mode('AUTO')
-    print('Mode: ', vehicle.mode)
-"""
 
 print("\nNow looking for ArUco Markers...\n")
 
