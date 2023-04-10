@@ -218,18 +218,18 @@ if vehicle.armed == True:
 else:
     print('Could not arm...')
 
-#arm_and_takeoff(6)
+#  arm_and_takeoff(6)
 
-"""
+
 if vehicle.mode != 'STABILIZE':
     vehicle.wait_for_mode('STABILIZE')
     print('Mode: ', vehicle.mode)
-"""
 
+"""
 if vehicle.mode != 'AUTO':
     vehicle.wait_for_mode('AUTO')
     print('Mode: ', vehicle.mode)
-
+"""
 
 print("Starting mission")
     
@@ -365,6 +365,7 @@ while True:
 
                 vehicle.send_mavlink(msg)
                 
+                time.sleep(0.5)
                 # Sound buzzer when firing. Plays a single C note
                 vehicle.play_tune(bytes('C','utf-8'))
 

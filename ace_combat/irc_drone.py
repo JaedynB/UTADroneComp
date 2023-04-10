@@ -210,15 +210,15 @@ friendly_detected = False
 
 print("Starting mission")
 
-"""
+
 if vehicle.mode != 'STABILIZE':
     vehicle.wait_for_mode('STABILIZE')
     print('Mode: ', vehicle.mode)
-"""
-if vehicle.mode != 'AUTO':
+
+"""if vehicle.mode != 'AUTO':
     vehicle.wait_for_mode('AUTO')
     print('Mode: ', vehicle.mode)
-
+"""
 print("\nNow looking for ArUco Markers...\n")
 
 # Aruco
@@ -265,11 +265,12 @@ while vehicle.armed == True:
             cv2.polylines(frame, [corners.astype(np.int32)], True, (0, 255, 255), 4, cv2.LINE_AA)
             cv2.putText(frame, str(markerID), (topLeft[0], topLeft[1] - 15), cv2.FONT_HERSHEY_PLAIN, 1.6 , (200, 100, 0), 2, cv2.LINE_AA)
             """
-            
+            """
             if int(markerID) == 14 and friendly_detected == False:
                 friendly_detected = True
                 print("Friendly detected: ID: " + str(markerID))
-            
+            """
+
             # Add marker ID to a list, check if ID in list, if in list do not log again
             if markerID not in markerID_list and (int(markerID) != 14):
                 
@@ -288,7 +289,7 @@ while vehicle.armed == True:
                 """
                 #time.sleep(10)
                 
-                # Turn the laser on
+                #Turn the laser on
                 msg = vehicle.message_factory.command_long_encode(
                     0,0,
                     mavutil.mavlink.MAV_CMD_DO_SET_SERVO,0,
@@ -302,8 +303,20 @@ while vehicle.armed == True:
                 print(output)
                 file.write(output + "\n")
                 
+                # LED strip on
+                msg = vehicle.message_factory.command_long_encode(
+                    0,0,
+                    mavutil.mavlink.MAV_CMD_DO_SET_RELAY,0,
+                    0, # Channel
+                    1, # PWM, between 1100 - 1900
+                    0,0,0,0,0       
+                )
+
+                vehicle.send_mavlink(msg)
+
                 # This time.sleep influences how long the laser is on
                 time.sleep(0.5)
+
 
                 # Turn the laser off
                 msg = vehicle.message_factory.command_long_encode(
@@ -316,8 +329,20 @@ while vehicle.armed == True:
 
                 vehicle.send_mavlink(msg)
 
+                # LED OFF
+                msg = vehicle.message_factory.command_long_encode(
+                    0,0,
+                    mavutil.mavlink.MAV_CMD_DO_SET_RELAY,0,
+                    0, # Channel
+                    0, # PWM, between 1100 - 1900
+                    0,0,0,0,0       
+                )
+
+                vehicle.send_mavlink(msg)
+                
+                time.sleep(0.5)
                 # Sound buzzer when firing. Plays a single C note
-                # vehicle.play_tune(bytes('C','utf-8'))
+                vehicle.play_tune(bytes('C','utf-8'))
 
                 output = "  Laser turned off for ID: " + str(markerID) + "    TIME: " + str(time.strftime("%m-%d-%y  %I:%M:%S %p",time.localtime()))
                 print(output)
