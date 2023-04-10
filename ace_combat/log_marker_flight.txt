@@ -1,6 +1,0 @@
-============= BEGIN LOG =============
-Found ID: 42    TIME: 04-07-23  04:07:42 PM
-  Laser turned  on for ID: 42    TIME: 04-07-23  04:07:42 PM
-  Laser turned off for ID: 42    TIME: 04-07-23  04:07:43 PM
-============== END LOG ==============
-
