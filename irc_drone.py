@@ -52,6 +52,12 @@ class IRCBot(irc.client.SimpleIRCClient):
         connection.join(self.channel)
         self.connected = True
         print("{} connected to {} and joined {}".format(self.__class__.__name__, self.server, self.channel))
+    
+    def end(self):
+        if self.connected:
+            self.connection.part(self.channel)
+            self.connection.quit(bot_name + " is diconnecting from the server.")
+            self.connected = False
 
 """
     @brief: UAVBot is an IRC bot that joins the IRC server and sends messages
@@ -412,6 +418,13 @@ while True:
     if key == ord("q"):
         break
     """
+
+# End the IRC bot connections and wait for the threads to finish
+uav_bot.end()
+listener.end()
+
+uav_thread.join()
+listener_thread.join()
 
 file.write("============== END LOG ==============\n\n")
 file.close()
