@@ -43,7 +43,7 @@ class IRCBot(irc.client.SimpleIRCClient):
         # When the bot successfully joins the channel, set its connection status to True
         connection.join(self.channel)
         self.connected = True
-        print("{} connected to {} and joined {}".format(self.__class__.__name__, self.server, self.channel))
+        print(f"{self.__class__.__name__} connected to {self.server} and joined {self.channel}")
     
     # Disconnect the bot from the server
     def end(self, bot_name):
@@ -68,8 +68,8 @@ class UAVBot(IRCBot):
         # Format the message with the given information
         # TODO: Verify that this message format is correct
         #       Timestamp needs to be in central time!!!!!
-        message = "RTXDC_2023 {}_UAV_Fire_{}_{}_{}".format(
-            team_name, aruco_id, time.strftime("%m-%d-%Y %H:%M:%S"), location)
+        time_of_fire = time.strftime("%m-%d-%Y %H:%M:%S")
+        message      = f"RTXDC_2023 {team_name}_UAV_Fire_{aruco_id}_{time_of_fire}_{location}"
 
         # Send the message to the channel
         self.connection.privmsg(self.channel, message)
@@ -105,10 +105,7 @@ class UGVHitListener(IRCBot):
 
             # Split the message into parts and extract the required information
             parts         = new_message.split("_")
-            #aruco_id      = parts[1]
             self.aruco_id = parts[1]
-            time_stamp    = parts[2]
-            gps_location  = parts[3]
                 
 def arm_and_takeoff(aTargetAltitude):
     """
@@ -164,19 +161,14 @@ def detect_markers(gray_frame):
 
     return corners, ids, rejected
 
-"""
-Attempt to stop the Pi Camera debug error from coming up
-    If the debug errors still show up, remove everything from this block and
-    only keep logging.basicConfig(filename = 'debug.log', level = logging.INFO)
-"""
-#logging.basicConfig(filename = 'debug.log', level = logging.INFO)
+# Create a logger to ignore the Pi Camera debug error
 console_handler = logging.StreamHandler()
 console_handler.setLevel(logging.WARNING)
 logging.getLogger().addHandler(console_handler)
 logging.getLogger().setLevel(logging.WARNING)
 
 #cv2.startWindowThread()
-picam2 = Picamera2(verbose_console=0)
+picam2 = Picamera2()
 picam2.configure(picam2.create_preview_configuration(main = {"format": 'XRGB8888', "size": (640, 480)}))
 picam2.start()
 #picam2.start_and_record_video("flight recording " + str(time.strftime("%m-%d-%y  %I:%M:%S %p",time.localtime())) + ".mp4")
@@ -284,37 +276,18 @@ while vehicle.armed == True:
             bottomLeft  = (int(bottomLeft[0]),  int(bottomLeft[1]))
             topLeft     = (int(topLeft[0]),     int(topLeft[1]))
             
-            """
-            # Draw
-            cv2.line(frame, topLeft, topRight, (0, 255, 0), 2)
-            cv2.line(frame, topRight, bottomRight, (0, 255, 0), 2)
-            cv2.line(frame, bottomRight, bottomLeft, (0, 255, 0), 2)
-            cv2.line(frame, bottomLeft, topLeft, (0, 255, 0), 2)
-            """
-            
-            """
-            # Computing and drawing the center of the ArUco marker
-            #cX = int((topLeft[0] + bottomRight[0]) / 2.0)
-            #cY = int((topLeft[1] + bottomRight[1]) / 2.0)
-            """
-            #cv2.circle(frame, (cX, cY), 4, (0, 0, 255) -1)
-            
-            """
-            cv2.polylines(frame, [corners.astype(np.int32)], True, (0, 255, 255), 4, cv2.LINE_AA)
-            cv2.putText(frame, str(markerID), (topLeft[0], topLeft[1] - 15), cv2.FONT_HERSHEY_PLAIN, 1.6 , (200, 100, 0), 2, cv2.LINE_AA)
-            """
-            
             # Check to see if we found the friendly marker
             if int(markerID) == 42 and friendly_detected == False:
                 friendly_detected = True
-                print("Friendly detected: ID: " + str(markerID))
+                print(f"Friendly detected: ID: {markerID}")
                 print("   Not firing laser")
             
             # Check if ID in list, add marker ID to a list if it is not in the list,  if in list do not log again
             if markerID not in markerID_list:
                 
                 #print("ID list: " + str(markerID_list))
-                output = "Found ID: " + str(markerID) + "    TIME: " + str(time.strftime("%m-%d-%y  %I:%M:%S %p",time.localtime()))
+                #output = "Found ID: " + str(markerID) + "    TIME: " + str(time.strftime("%m-%d-%y  %I:%M:%S %p",time.localtime()))
+                output = f"Found ID: {markerID}    TIME: {time.strftime('%m-%d-%y  %I:%M:%S %p', time.localtime())}"
                 print(output)
                 file.write(output + "\n")
                 
@@ -328,7 +301,8 @@ while vehicle.armed == True:
                 )
 
                 vehicle.send_mavlink(msg)
-                output = "  Laser turned  on for ID: " + str(markerID) + "    TIME: " + str(time.strftime("%m-%d-%y  %I:%M:%S %p", time.localtime()))
+                #output = "  Laser turned  on for ID: " + str(markerID) + "    TIME: " + str(time.strftime("%m-%d-%y  %I:%M:%S %p", time.localtime()))
+                output = f"  Laser turned on for ID: {markerID}    TIME: {time.strftime('%m-%d-%y  %I:%M:%S %p', time.localtime())}"
                 print(output)
                 file.write(output + "\n")
                 
@@ -373,7 +347,8 @@ while vehicle.armed == True:
                 # Sound buzzer when firing. Plays a single C note
                 vehicle.play_tune(bytes('C','utf-8'))
 
-                output = "  Laser turned off for ID: " + str(markerID) + "    TIME: " + str(time.strftime("%m-%d-%y  %I:%M:%S %p",time.localtime()))
+                #output = "  Laser turned off for ID: " + str(markerID) + "    TIME: " + str(time.strftime("%m-%d-%y  %I:%M:%S %p",time.localtime()))
+                output = f"  Laser turned off for ID: {markerID}    TIME: {time.strftime('%m-%d-%y  %I:%M:%S %p', time.localtime())}"
                 print(output)
                 file.write(output + "\n")
 
@@ -384,38 +359,31 @@ while vehicle.armed == True:
                 """
                 # Try to give the listener the current marker ID it is looking at
                 listener.markerID = markerID
-                print("listener.markerID = " + str(listener.markerID))
+                print(f"listener.markerID is looking for IRC messages with ID: {listener.markerID}")
 
                 # Pull GPS Coordinates latitude and longitude from Mavlink stream
                 lat  = vehicle.location.global_relative_frame.lat
                 lon  = vehicle.location.global_relative_frame.lon
 
                 # Write GPS part of string message, convert GPS coords to strings so it can be encoded 
-                location     = str(lat) + '_' + str(lon)
+                location     = f"{lat}_{lon}"
                 team_name    = "UTA"
                 current_time = datetime.now()
 
                 # Send fire message to server
                 uav_bot.send_fire_message(team_name, str(markerID), current_time, location)
 
-                print("Bot ID: " + str(listener.aruco_id))
+                print(f"Marker ID currently in UGV_HitListener:  {listener.aruco_id}")
 
                 # Check to see if the aruco ID from IRC is the same as the current marker
                 #   If it is, add it to the list so we do not shoot at it again
                 if listener.aruco_id != None and int(markerID) not in markerID_list:
-                    print("Here inside the bot check loop.")
+                    print("Checking for hit verification...")
                     if int(listener.aruco_id) == int(markerID):
-                        print("Found {}".format(listener.aruco_id))
+                        print(f"Found {listener.aruco_id}")
                         markerID_list.append(markerID)
-                        print("Added {} to list".format(listener.aruco_id))
+                        print(f"Added {listener.aruco_id} to list")
                 
-    #cv2.imshow("Camera", frame)
-    #key = cv2.waitKey(25)
-    
-    """
-    if key == ord("q"):
-        break
-    """
 
 # End the IRC bot connections and wait for the threads to finish
 uav_bot.end()
@@ -429,5 +397,4 @@ file.close()
 
 vehicle.close()
 #picam2.stop_recording()
-#cv2.destroyAllWindows()
 exit()
