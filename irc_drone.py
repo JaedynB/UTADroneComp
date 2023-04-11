@@ -64,11 +64,11 @@ class UAVBot(IRCBot):
         IRCBot.__init__(self, "UTA_UAVBot", "irc.libera.chat", "#RTXDrone")
 
     # Send fire message to channel
-    def send_fire_message(self, team_name, aruco_id, time, location):
+    def send_fire_message(self, team_name, aruco_id, time_of_laser, location):
         # Format the message with the given information
         # TODO: Verify that this message format is correct
         #       Timestamp needs to be in central time!!!!!
-        time_of_fire = time.strftime("%m-%d-%Y %H:%M:%S")
+        time_of_fire = time_of_laser.strftime("%m-%d-%Y %H:%M:%S")
         message      = f"RTXDC_2023 {team_name}_UAV_Fire_{aruco_id}_{time_of_fire}_{location}"
 
         # Send the message to the channel
