@@ -1,5 +1,4 @@
 from   dronekit           import connect, VehicleMode, LocationGlobalRelative, APIException
-import collections
 from   picamera2          import Picamera2
 from   picamera2.encoders import H264Encoder, Quality
 from   pymavlink          import mavutil
@@ -13,6 +12,7 @@ import logging
 import irc.client
 import irc.bot
 import threading
+import collections
 
 """
 if sys.version_info.major == 3 and sys.version_info.minor >= 10:
@@ -54,11 +54,11 @@ class IRCBot(irc.client.SimpleIRCClient):
         print("{} connected to {} and joined {}".format(self.__class__.__name__, self.server, self.channel))
     
     # Disconnect the bot from the server
-    def end(self):
+    def end(self, bot_name):
         # Check if the bot is currently connected to the server
         if self.connected:
-            self.connection.part(self.channel)                                   # Leave the channel the bot is currently in
-            self.connection.quit(bot_name + " is diconnecting from the server.") # Send a quit message to the IRC server and disconnect the bot
+            self.connection.part(self.channel)                                    # Leave the channel the bot is currently in
+            self.connection.quit(bot_name + " is disconnecting from the server.") # Send a quit message to the IRC server and disconnect the bot
             self.connected = False
 
 """
@@ -81,6 +81,9 @@ class UAVBot(IRCBot):
 
         # Send the message to the channel
         self.connection.privmsg(self.channel, message)
+
+        # Raytheon says only send a message per second?
+        time.sleep(1)
 
 """
     @brief: UGVHitListener is an IRC bot that joins the IRC server and listens
@@ -114,18 +117,6 @@ class UGVHitListener(IRCBot):
             self.aruco_id = parts[1]
             time_stamp    = parts[2]
             gps_location  = parts[3]
-
-            """
-            current_time     = datetime.now()
-            date_time_object = datetime.strptime(time_stamp, "%m-%d-%Y %H:%M:%S") # This format matters, maybe look at getting the time from the IRC server message
-            # This code checks for messages recived in a certain amount of time, don't use it cause it may not work if the UGVs are
-            #   not working or not on the same timezone
-            # Check if the message was received in the last set amount of time in seconds
-            if current_time - date_time_object <= timedelta(seconds = 3):
-                # Add the arucoID to self.aruco_id if all these requirements are met
-                self.aruco_id = aruco_id
-                print(f"Received hit confirmation for markerID {self.markerID} at time {time_stamp} and location {gps_location}")
-            """
                 
 def arm_and_takeoff(aTargetAltitude):
     """
@@ -267,7 +258,6 @@ print("Starting mission")
 file = open("log_marker_flight.txt","w")
 file.write("============= BEGIN LOG =============\n")
 
-
 marker_dict   = cv2.aruco.getPredefinedDictionary(cv2.aruco.DICT_6X6_1000)
 param_markers = cv2.aruco.DetectorParameters()
 detector      = cv2.aruco.ArucoDetector(marker_dict, param_markers)
@@ -326,7 +316,7 @@ while vehicle.armed == True:
             if int(markerID) == 42 and friendly_detected == False:
                 friendly_detected = True
                 print("Friendly detected: ID: " + str(markerID))
-                print("   Not firing laser.")
+                print("   Not firing laser")
             
             # Check if ID in list, add marker ID to a list if it is not in the list,  if in list do not log again
             if markerID not in markerID_list:
@@ -346,7 +336,7 @@ while vehicle.armed == True:
                 )
 
                 vehicle.send_mavlink(msg)
-                output = "  Laser turned  on for ID: " + str(markerID) + "    TIME: " + str(time.strftime("%m-%d-%y  %I:%M:%S %p",time.localtime()))
+                output = "  Laser turned  on for ID: " + str(markerID) + "    TIME: " + str(time.strftime("%m-%d-%y  %I:%M:%S %p", time.localtime()))
                 print(output)
                 file.write(output + "\n")
                 
@@ -362,8 +352,7 @@ while vehicle.armed == True:
                 vehicle.send_mavlink(msg)
 
                 # This time.sleep influences how long the laser is on
-                time.sleep(0.5)
-
+                time.sleep(0.1) # Was 0.25, maybe go lower?
 
                 # Turn the laser off
                 msg = vehicle.message_factory.command_long_encode(
@@ -387,7 +376,8 @@ while vehicle.armed == True:
 
                 vehicle.send_mavlink(msg)
                 
-                time.sleep(0.5)
+                time.sleep(0.1) # Was 0.5
+
                 # Sound buzzer when firing. Plays a single C note
                 vehicle.play_tune(bytes('C','utf-8'))
 
@@ -415,8 +405,6 @@ while vehicle.armed == True:
 
                 # Send fire message to server
                 uav_bot.send_fire_message(team_name, str(markerID), current_time, location)
-                
-                time.sleep(1)
 
                 print("Bot ID: " + str(listener.aruco_id))
 
