@@ -53,10 +53,12 @@ class IRCBot(irc.client.SimpleIRCClient):
         self.connected = True
         print("{} connected to {} and joined {}".format(self.__class__.__name__, self.server, self.channel))
     
+    # Disconnect the bot from the server
     def end(self):
+        # Check if the bot is currently connected to the server
         if self.connected:
-            self.connection.part(self.channel)
-            self.connection.quit(bot_name + " is diconnecting from the server.")
+            self.connection.part(self.channel)                                   # Leave the channel the bot is currently in
+            self.connection.quit(bot_name + " is diconnecting from the server.") # Send a quit message to the IRC server and disconnect the bot
             self.connected = False
 
 """
@@ -214,6 +216,11 @@ print('Connecting to vehicle on: ', connection_string)
 vehicle = connect(connection_string,baud = 57600,wait_ready = True)
 print('Connected')
 
+# Make the mode stabilize so that we don't get "auto mode not armable"
+#   This will be switched to auto after the drone is armed
+if vehicle.mode != 'STABILIZE':
+    vehicle.wait_for_mode('STABILIZE')
+    print('Mode: ', vehicle.mode)
 
 print('Arming...')
 vehicle.arm()
