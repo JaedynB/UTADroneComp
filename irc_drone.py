@@ -161,6 +161,26 @@ def arm_and_takeoff(aTargetAltitude):
             break
         time.sleep(1)
 
+# Capture the current frame from the Pi Camera
+def capture_frame():
+    frame      = picam2.capture_array()
+    gray_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+    
+    return frame, gray_frame
+
+# Try to detect any ArUco markers in the current frame
+def detect_markers(gray_frame):
+    # corners  - A list of detected marker corners, where each element is an array of four corner points in pixel coordinates
+    # ids      - A list of detected marker IDs, where each element corresponds to the marker at the corresponding index in the corners list
+    # rejected - A list of rejected candidate marker corners that did not meet the detection criteria
+    (corners, ids, rejected) = aruco.detectMarkers(
+        gray_frame,                 # The input grayscale image in which the markers will be detected
+        marker_dict,                # The dictionary of markers used for detection
+        parameters = param_markers  # Optional parameters for detection
+    )
+
+    return corners, ids, rejected
+
 """
 Attempt to stop the Pi Camera debug error from coming up
     If the debug errors still show up, remove everything from this block and
@@ -253,24 +273,15 @@ param_markers = cv2.aruco.DetectorParameters()
 detector      = cv2.aruco.ArucoDetector(marker_dict, param_markers)
 
 # A list for the IDs we find
-markerID_list     = [42]    # UTA Oficial ID: 42
+markerID_list     = [42]    # UTA Official ID: 42
 friendly_detected = False
 
 print("\nNow looking for ArUco Markers...\n")
 
-# Aruco
-while True:
-    frame      = picam2.capture_array()
-    gray_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-    
-    # corners  - A list of detected marker corners, where each element is an array of four corner points in pixel coordinates
-    # ids      - A list of detected marker IDs, where each element corresponds to the marker at the corresponding index in the corners list
-    # rejected - A list of rejected candidate marker corners that did not meet the detection criteria
-    (corners, ids, rejected) = aruco.detectMarkers(
-        gray_frame,                 # The input grayscale image in which the markers will be detected
-        marker_dict,                # The dictionary of markers used for detection
-        parameters = param_markers  # Optional parameters for detection
-    )
+# ArUco detection while the drone is armed
+while vehicle.armed == True:
+    frame, gray_frame      = capture_frame()
+    corners, ids, rejected = detect_markers(gray_frame)
     
     # If any markers are detected in the image
     if len(corners) > 0:
