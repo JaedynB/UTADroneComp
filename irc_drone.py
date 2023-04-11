@@ -291,7 +291,7 @@ while vehicle.armed == True:
                 print(output)
                 file.write(output + "\n")
                 
-                 # Turn the laser on
+                # Turn the laser on
                 msg = vehicle.message_factory.command_long_encode(
                     0,0,
                     mavutil.mavlink.MAV_CMD_DO_SET_SERVO,0,
