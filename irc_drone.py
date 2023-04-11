@@ -12,14 +12,6 @@ import logging
 import irc.client
 import irc.bot
 import threading
-import collections
-
-"""
-if sys.version_info.major == 3 and sys.version_info.minor >= 10:
-    from collection.abc import MutableMapping
-else:
-    from collections import MutableMapping
-"""
 
 ###################################################################################
 # This file requires the mission to have a return to launch/landing waypoint
