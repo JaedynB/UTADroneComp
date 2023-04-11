@@ -5,7 +5,7 @@ import threading
 """
     @brief: IRCBot inherits from the irc.client.SimpleIRCClient class. It represents a
                 basic template for creating an IRC bot, which connects to an IRC server
-                and a specified channel. Both UAVBot and UGVHitListener inherrit from
+                and a specified channel. Both UAVBot and UGVHitListener inherit from
                 this class
 """
 class IRCBot(irc.client.SimpleIRCClient):
@@ -29,6 +29,14 @@ class IRCBot(irc.client.SimpleIRCClient):
         connection.join(self.channel)
         self.connected = True
         print("{} connected to {} and joined {}".format(self.__class__.__name__, self.server, self.channel))
+    
+    # Disconnect the bot from the server
+    def end(self, bot_name):
+        # Check if the bot is currently connected to the server
+        if self.connected:
+            self.connection.part(self.channel)                                    # Leave the channel the bot is currently in
+            self.connection.quit(bot_name + " is disconnecting from the server.") # Send a quit message to the IRC server and disconnect the bot
+            self.connected = False
 
 """
     @brief: UAVBot is an IRC bot that joins the IRC server and sends messages
@@ -44,11 +52,15 @@ class UAVBot(IRCBot):
     def send_fire_message(self, team_name, aruco_id, time, location):
         # Format the message with the given information
         # TODO: Verify that this message format is correct
+        #       Timestamp needs to be in central time!!!!!
         message = "RTXDC_2023 {}_UAV_Fire_{}_{}_{}".format(
             team_name, aruco_id, time.strftime("%m-%d-%Y %H:%M:%S"), location)
 
         # Send the message to the channel
         self.connection.privmsg(self.channel, message)
+
+        # Raytheon says only send a message per second?
+        time.sleep(1)
 
 """
     @brief: UGVHitListener is an IRC bot that joins the IRC server and listens
@@ -61,17 +73,18 @@ class UGVHitListener(IRCBot):
         # Call the parent constructor to connect to the IRC server and join the channel
         IRCBot.__init__(self, "UGV_HitListener", "irc.libera.chat", "#RTXDrone")
 
-        # Set the bot's initial aruco_id to None
-        self.aruco_id = None
+        self.aruco_id  = None # The aruco_id from the server
+        self.markerID  = None # The marker ID the drone is currently looking at
 
     # This will constantly listen for public messages sent in the channel
     def on_pubmsg(self, connection, event):
+        # Message format: RTXDC_2023 UTA_UGV_Hit_134_04-03-2023 11:38:57_0.0_0.0
+
         # Parse incoming message and extract hit information
         message = event.arguments[0]
 
-        # TODO: Maybe look at a way to make this search for only the string containing the
-        #       ID we are currently shooting at
-        if "_UGV_Hit_" in message:
+        # Only look at messages in the server that contain the ID of the vehicle we are currently looking at
+        if f"_UGV_Hit_{self.markerID}" in message:
             # Remove the UGV_Hit part of the received message so it is easier to split
             new_message = message.replace("RTXDC_2023 ", "").replace("UGV_Hit_", "")
 
@@ -80,8 +93,6 @@ class UGVHitListener(IRCBot):
             self.aruco_id = parts[1]
             time_stamp    = parts[2]
             gps_location  = parts[3]
-            print("Received hit confirmation for aruco_id {} at time {} and location {}".format(self.aruco_id, time_stamp, gps_location))
-            # TODO: If this runs continuously, is there any way to check the messages after we fire?
 
 # Create a function to run the IRC bot in a separate thread
 def run_bot(bot):
