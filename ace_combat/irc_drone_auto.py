@@ -1,5 +1,4 @@
 from   dronekit           import connect, VehicleMode, LocationGlobalRelative, APIException
-import collections
 from   picamera2          import Picamera2
 from   picamera2.encoders import H264Encoder, Quality
 from   pymavlink          import mavutil
@@ -13,13 +12,6 @@ import logging
 import irc.client
 import irc.bot
 import threading
-
-"""
-if sys.version_info.major == 3 and sys.version_info.minor >= 10:
-    from collection.abc import MutableMapping
-else:
-    from collections import MutableMapping
-"""
 
 ###################################################################################
 # This file requires the mission to have a return to launch/landing waypoint
@@ -51,7 +43,15 @@ class IRCBot(irc.client.SimpleIRCClient):
         # When the bot successfully joins the channel, set its connection status to True
         connection.join(self.channel)
         self.connected = True
-        print("{} connected to {} and joined {}".format(self.__class__.__name__, self.server, self.channel))
+        print(f"{self.__class__.__name__} connected to {self.server} and joined {self.channel}")
+    
+    # Disconnect the bot from the server
+    def end(self, bot_name):
+        # Check if the bot is currently connected to the server
+        if self.connected:
+            self.connection.part(self.channel)                                    # Leave the channel the bot is currently in
+            self.connection.quit(bot_name + " is disconnecting from the server.") # Send a quit message to the IRC server and disconnect the bot
+            self.connected = False
 
 """
     @brief: UAVBot is an IRC bot that joins the IRC server and sends messages
@@ -64,15 +64,18 @@ class UAVBot(IRCBot):
         IRCBot.__init__(self, "UTA_UAVBot", "irc.libera.chat", "#RTXDrone")
 
     # Send fire message to channel
-    def send_fire_message(self, team_name, aruco_id, time, location):
+    def send_fire_message(self, team_name, aruco_id, time_of_laser, location):
+        # Raytheon says only send a message per second?
+        time.sleep(1)
         # Format the message with the given information
         # TODO: Verify that this message format is correct
         #       Timestamp needs to be in central time!!!!!
-        message = "RTXDC_2023 {}_UAV_Fire_{}_{}_{}".format(
-            team_name, aruco_id, time.strftime("%m-%d-%Y %H:%M:%S"), location)
+        time_of_fire = time_of_laser.strftime("%m-%d-%Y %H:%M:%S")
+        message      = f"RTXDC_2023 {team_name}_UAV_Fire_{aruco_id}_{time_of_fire}_{location}"
 
         # Send the message to the channel
         self.connection.privmsg(self.channel, message)
+
 
 """
     @brief: UGVHitListener is an IRC bot that joins the IRC server and listens
@@ -102,23 +105,7 @@ class UGVHitListener(IRCBot):
 
             # Split the message into parts and extract the required information
             parts         = new_message.split("_")
-            #aruco_id      = parts[1]
             self.aruco_id = parts[1]
-            time_stamp    = parts[2]
-            gps_location  = parts[3]
-
-            """
-            current_time     = datetime.now()
-            date_time_object = datetime.strptime(time_stamp, "%m-%d-%Y %H:%M:%S") # This format matters, maybe look at getting the time from the IRC server message
-
-            # This code checks for messages recived in a certain amount of time, don't use it cause it may not work if the UGVs are
-            #   not working or not on the same timezone
-            # Check if the message was received in the last set amount of time in seconds
-            if current_time - date_time_object <= timedelta(seconds = 3):
-                # Add the arucoID to self.aruco_id if all these requirements are met
-                self.aruco_id = aruco_id
-                print(f"Received hit confirmation for markerID {self.markerID} at time {time_stamp} and location {gps_location}")
-            """
                 
 def arm_and_takeoff(aTargetAltitude):
     """
@@ -154,19 +141,34 @@ def arm_and_takeoff(aTargetAltitude):
             break
         time.sleep(1)
 
-"""
-Attempt to stop the Pi Camera debug error from coming up
-    If the debug errors still show up, remove everything from this block and
-    only keep logging.basicConfig(filename = 'debug.log', level = logging.INFO)
-"""
-#logging.basicConfig(filename = 'debug.log', level = logging.INFO)
+# Capture the current frame from the Pi Camera
+def capture_frame():
+    frame      = picam2.capture_array()
+    gray_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+    
+    return frame, gray_frame
+
+# Try to detect any ArUco markers in the current frame
+def detect_markers(gray_frame):
+    # corners  - A list of detected marker corners, where each element is an array of four corner points in pixel coordinates
+    # ids      - A list of detected marker IDs, where each element corresponds to the marker at the corresponding index in the corners list
+    # rejected - A list of rejected candidate marker corners that did not meet the detection criteria
+    (corners, ids, rejected) = aruco.detectMarkers(
+        gray_frame,                 # The input grayscale image in which the markers will be detected
+        marker_dict,                # The dictionary of markers used for detection
+        parameters = param_markers  # Optional parameters for detection
+    )
+
+    return corners, ids, rejected
+
+# Create a logger to ignore the Pi Camera debug error
 console_handler = logging.StreamHandler()
 console_handler.setLevel(logging.WARNING)
 logging.getLogger().addHandler(console_handler)
 logging.getLogger().setLevel(logging.WARNING)
 
 #cv2.startWindowThread()
-picam2 = Picamera2(verbose_console=0)
+picam2 = Picamera2()
 picam2.configure(picam2.create_preview_configuration(main = {"format": 'XRGB8888', "size": (640, 480)}))
 picam2.start()
 #picam2.start_and_record_video("flight recording " + str(time.strftime("%m-%d-%y  %I:%M:%S %p",time.localtime())) + ".mp4")
@@ -206,9 +208,14 @@ print("Made it past the IRC bot initialization")
 connection_string = '/dev/ttyUSB0'
 
 print('Connecting to vehicle on: ', connection_string)
-vehicle = connect(connection_string,baud = 57600,wait_ready = True)
+vehicle = connect(connection_string,baud = 57600, wait_ready = True)
 print('Connected')
 
+# Make the mode stabilize so that we don't get "auto mode not armable"
+#   This will be switched to auto after the drone is armed
+if vehicle.mode != 'STABILIZE':
+    vehicle.wait_for_mode('STABILIZE')
+    print('Mode: ', vehicle.mode)
 
 print('Arming...')
 vehicle.arm()
@@ -218,48 +225,36 @@ if vehicle.armed == True:
 else:
     print('Could not arm...')
 
-#  arm_and_takeoff(6)
-
-
+#arm_and_takeoff(6)
+"""
 if vehicle.mode != 'STABILIZE':
     vehicle.wait_for_mode('STABILIZE')
     print('Mode: ', vehicle.mode)
-
 """
+
 if vehicle.mode != 'AUTO':
     vehicle.wait_for_mode('AUTO')
     print('Mode: ', vehicle.mode)
-"""
 
 print("Starting mission")
     
 file = open("log_marker_flight.txt","w")
 file.write("============= BEGIN LOG =============\n")
 
-
 marker_dict   = cv2.aruco.getPredefinedDictionary(cv2.aruco.DICT_6X6_1000)
 param_markers = cv2.aruco.DetectorParameters()
 detector      = cv2.aruco.ArucoDetector(marker_dict, param_markers)
 
 # A list for the IDs we find
-markerID_list     = [42]    # UTA Oficial ID: 42
+markerID_list     = [42]    # UTA Official ID: 42
 friendly_detected = False
 
 print("\nNow looking for ArUco Markers...\n")
 
-# Aruco
-while True:
-    frame      = picam2.capture_array()
-    gray_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-    
-    # corners  - A list of detected marker corners, where each element is an array of four corner points in pixel coordinates
-    # ids      - A list of detected marker IDs, where each element corresponds to the marker at the corresponding index in the corners list
-    # rejected - A list of rejected candidate marker corners that did not meet the detection criteria
-    (corners, ids, rejected) = aruco.detectMarkers(
-        gray_frame,                 # The input grayscale image in which the markers will be detected
-        marker_dict,                # The dictionary of markers used for detection
-        parameters = param_markers  # Optional parameters for detection
-    )
+# ArUco detection while the drone is armed
+while vehicle.armed == True:
+    frame, gray_frame      = capture_frame()
+    corners, ids, rejected = detect_markers(gray_frame)
     
     # If any markers are detected in the image
     if len(corners) > 0:
@@ -280,41 +275,22 @@ while True:
             bottomLeft  = (int(bottomLeft[0]),  int(bottomLeft[1]))
             topLeft     = (int(topLeft[0]),     int(topLeft[1]))
             
-            """
-            # Draw
-            cv2.line(frame, topLeft, topRight, (0, 255, 0), 2)
-            cv2.line(frame, topRight, bottomRight, (0, 255, 0), 2)
-            cv2.line(frame, bottomRight, bottomLeft, (0, 255, 0), 2)
-            cv2.line(frame, bottomLeft, topLeft, (0, 255, 0), 2)
-            """
-            
-            """
-            # Computing and drawing the center of the ArUco marker
-            #cX = int((topLeft[0] + bottomRight[0]) / 2.0)
-            #cY = int((topLeft[1] + bottomRight[1]) / 2.0)
-            """
-            #cv2.circle(frame, (cX, cY), 4, (0, 0, 255) -1)
-            
-            """
-            cv2.polylines(frame, [corners.astype(np.int32)], True, (0, 255, 255), 4, cv2.LINE_AA)
-            cv2.putText(frame, str(markerID), (topLeft[0], topLeft[1] - 15), cv2.FONT_HERSHEY_PLAIN, 1.6 , (200, 100, 0), 2, cv2.LINE_AA)
-            """
-            
             # Check to see if we found the friendly marker
             if int(markerID) == 42 and friendly_detected == False:
                 friendly_detected = True
-                print("Friendly detected: ID: " + str(markerID))
-                print("   Not firing laser.")
+                print(f"Friendly detected: ID: {markerID}")
+                print("   Not firing laser")
             
             # Check if ID in list, add marker ID to a list if it is not in the list,  if in list do not log again
             if markerID not in markerID_list:
                 
                 #print("ID list: " + str(markerID_list))
-                output = "Found ID: " + str(markerID) + "    TIME: " + str(time.strftime("%m-%d-%y  %I:%M:%S %p",time.localtime()))
+                #output = "Found ID: " + str(markerID) + "    TIME: " + str(time.strftime("%m-%d-%y  %I:%M:%S %p",time.localtime()))
+                output = f"Found ID: {markerID}    TIME: {time.strftime('%m-%d-%y  %I:%M:%S %p', time.localtime())}"
                 print(output)
                 file.write(output + "\n")
                 
-                 # Turn the laser on
+                # Turn the laser on
                 msg = vehicle.message_factory.command_long_encode(
                     0,0,
                     mavutil.mavlink.MAV_CMD_DO_SET_SERVO,0,
@@ -324,7 +300,8 @@ while True:
                 )
 
                 vehicle.send_mavlink(msg)
-                output = "  Laser turned  on for ID: " + str(markerID) + "    TIME: " + str(time.strftime("%m-%d-%y  %I:%M:%S %p",time.localtime()))
+                #output = "  Laser turned  on for ID: " + str(markerID) + "    TIME: " + str(time.strftime("%m-%d-%y  %I:%M:%S %p", time.localtime()))
+                output = f"  Laser turned on for ID: {markerID}    TIME: {time.strftime('%m-%d-%y  %I:%M:%S %p', time.localtime())}"
                 print(output)
                 file.write(output + "\n")
                 
@@ -340,8 +317,7 @@ while True:
                 vehicle.send_mavlink(msg)
 
                 # This time.sleep influences how long the laser is on
-                time.sleep(0.5)
-
+                time.sleep(0.1) # Was 0.25, maybe go lower?
 
                 # Turn the laser off
                 msg = vehicle.message_factory.command_long_encode(
@@ -365,11 +341,13 @@ while True:
 
                 vehicle.send_mavlink(msg)
                 
-                time.sleep(0.5)
+                time.sleep(0.1) # Was 0.5
+
                 # Sound buzzer when firing. Plays a single C note
                 vehicle.play_tune(bytes('C','utf-8'))
 
-                output = "  Laser turned off for ID: " + str(markerID) + "    TIME: " + str(time.strftime("%m-%d-%y  %I:%M:%S %p",time.localtime()))
+                #output = "  Laser turned off for ID: " + str(markerID) + "    TIME: " + str(time.strftime("%m-%d-%y  %I:%M:%S %p",time.localtime()))
+                output = f"  Laser turned off for ID: {markerID}    TIME: {time.strftime('%m-%d-%y  %I:%M:%S %p', time.localtime())}"
                 print(output)
                 file.write(output + "\n")
 
@@ -380,45 +358,41 @@ while True:
                 """
                 # Try to give the listener the current marker ID it is looking at
                 listener.markerID = markerID
-                print("listener.markerID = " + str(listener.markerID))
+                print(f"listener.markerID is looking for IRC messages with ID: {listener.markerID}")
 
                 # Pull GPS Coordinates latitude and longitude from Mavlink stream
                 lat  = vehicle.location.global_relative_frame.lat
                 lon  = vehicle.location.global_relative_frame.lon
 
                 # Write GPS part of string message, convert GPS coords to strings so it can be encoded 
-                location     = str(lat) + '_' + str(lon)
+                location     = f"{lat}_{lon}"
                 team_name    = "UTA"
                 current_time = datetime.now()
 
                 # Send fire message to server
                 uav_bot.send_fire_message(team_name, str(markerID), current_time, location)
-                
-                time.sleep(1)
 
-                print("Bot ID: " + str(listener.aruco_id))
+                print(f"Marker ID currently in UGV_HitListener:  {listener.aruco_id}")
 
                 # Check to see if the aruco ID from IRC is the same as the current marker
                 #   If it is, add it to the list so we do not shoot at it again
                 if listener.aruco_id != None and int(markerID) not in markerID_list:
-                    print("Here inside the bot check loop.")
+                    print("Checking for hit verification...")
                     if int(listener.aruco_id) == int(markerID):
-                        print("Found {}".format(listener.aruco_id))
+                        print(f"Found {listener.aruco_id}")
                         markerID_list.append(markerID)
-                        print("Added {} to list".format(listener.aruco_id))
-                
-    #cv2.imshow("Camera", frame)
-    #key = cv2.waitKey(25)
-    
-    """
-    if key == ord("q"):
-        break
-    """
+                        print(f"Added {listener.aruco_id} to list")
 
+vehicle.close()
+file.write("\nBots now leaving the IRC server...\n")    
 file.write("============== END LOG ==============\n\n")
 file.close()
 
-vehicle.close()
+# End the IRC bot connections and wait for the threads to finish
+uav_bot.end("UTA_UAVBot")
+listener.end("UGV_HitListener")
+
+time.sleep(1)
+
 #picam2.stop_recording()
-#cv2.destroyAllWindows()
 exit()

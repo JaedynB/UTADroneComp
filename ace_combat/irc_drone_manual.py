@@ -394,8 +394,7 @@ file.close()
 uav_bot.end("UTA_UAVBot")
 listener.end("UGV_HitListener")
 
-uav_thread.join()
-listener_thread.join()
+time.sleep(1)
 
 #picam2.stop_recording()
 exit()
