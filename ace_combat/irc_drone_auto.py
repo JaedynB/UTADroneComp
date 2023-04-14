@@ -178,19 +178,23 @@ picam2.start()
 ############################################################
 
 # Create a function to run the IRC bot in a separate thread
-def run_bot(bot):
-    bot.start()
+def run_bot(bot, stop_event):
+    while not stop_event.is_set():
+        bot.reactor.process_once()
+
+# Create an Event object to signal threads to stop
+stop_threads_event = threading.Event()
 
 print("Creating the IRC bots...")
 
 # Create and start the UAVBot in a separate thread
 uav_bot    = UAVBot()
-uav_thread = threading.Thread(target = run_bot, args = (uav_bot,))
+uav_thread = threading.Thread(target = run_bot, args = (uav_bot, stop_threads_event))
 uav_thread.start()
 
 # Create and start the UGVHitListener in a separate thread
 listener        = UGVHitListener()
-listener_thread = threading.Thread(target = run_bot, args = (listener,))
+listener_thread = threading.Thread(target = run_bot, args = (listener, stop_threads_event))
 listener_thread.start()
 
 # Wait for the UAVBot and UGVHitListener to connect to the server
@@ -396,6 +400,11 @@ uav_bot.end("UTA_UAVBot")
 listener.end("UGV_HitListener")
 
 time.sleep(1)
+
+# Signal the threads to stop and wait for them to finish
+stop_threads_event.set()
+uav_thread.join()
+listener_thread.join()
 
 #picam2.stop_recording()
 exit()
