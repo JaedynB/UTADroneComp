@@ -238,8 +238,10 @@ if vehicle.mode != 'AUTO':
 
 print("Starting mission")
     
-file = open("log_marker_flight.txt","w")
-file.write("============= BEGIN LOG =============\n")
+filename = "log.txt"
+
+with open(filename, "w") as file:
+    file.write("============= BEGIN LOG =============\n")
 
 marker_dict   = cv2.aruco.getPredefinedDictionary(cv2.aruco.DICT_6X6_1000)
 param_markers = cv2.aruco.DetectorParameters()
@@ -288,7 +290,8 @@ while vehicle.armed == True:
                 #output = "Found ID: " + str(markerID) + "    TIME: " + str(time.strftime("%m-%d-%y  %I:%M:%S %p",time.localtime()))
                 output = f"Found ID: {markerID}    TIME: {time.strftime('%m-%d-%y  %I:%M:%S %p', time.localtime())}"
                 print(output)
-                file.write(output + "\n")
+                with open(filename, "a") as file:
+                    file.write(output + "\n")
                 
                 # Turn the laser on
                 msg = vehicle.message_factory.command_long_encode(
@@ -303,7 +306,8 @@ while vehicle.armed == True:
                 #output = "  Laser turned  on for ID: " + str(markerID) + "    TIME: " + str(time.strftime("%m-%d-%y  %I:%M:%S %p", time.localtime()))
                 output = f"  Laser turned on for ID: {markerID}    TIME: {time.strftime('%m-%d-%y  %I:%M:%S %p', time.localtime())}"
                 print(output)
-                file.write(output + "\n")
+                with open(filename, "a") as file:
+                    file.write(output + "\n")
                 
                 # LED strip on
                 msg = vehicle.message_factory.command_long_encode(
@@ -349,7 +353,8 @@ while vehicle.armed == True:
                 #output = "  Laser turned off for ID: " + str(markerID) + "    TIME: " + str(time.strftime("%m-%d-%y  %I:%M:%S %p",time.localtime()))
                 output = f"  Laser turned off for ID: {markerID}    TIME: {time.strftime('%m-%d-%y  %I:%M:%S %p', time.localtime())}"
                 print(output)
-                file.write(output + "\n")
+                with open(filename, "a") as file:
+                    file.write(output + "\n")
 
                 """
                 ------------------------------------------------------------------------------------
@@ -384,9 +389,9 @@ while vehicle.armed == True:
                         print(f"Added {listener.aruco_id} to list")
 
 vehicle.close()
-file.write("\nBots now leaving the IRC server...\n")    
-file.write("============== END LOG ==============\n\n")
-file.close()
+output = "\nBots now leaving the IRC server...\n============== END LOG ==============\n\n"
+with open(filename, "a") as file:
+    file.write(output + "\n")
 
 # End the IRC bot connections and wait for the threads to finish
 uav_bot.end("UTA_UAVBot")
