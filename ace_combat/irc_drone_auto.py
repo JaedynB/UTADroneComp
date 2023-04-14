@@ -70,7 +70,7 @@ class UAVBot(IRCBot):
         # Format the message with the given information
         # TODO: Verify that this message format is correct
         #       Timestamp needs to be in central time!!!!!
-        time_of_fire = time_of_laser.strftime("%m-%d-%Y %H:%M:%S")
+        time_of_fire = time_of_laser.strftime("%m-%d-%Y %I:%M:%S")
         message      = f"RTXDC_2023 {team_name}_UAV_Fire_{aruco_id}_{time_of_fire}_{location}"
 
         # Send the message to the channel
@@ -196,8 +196,6 @@ listener_thread.start()
 # Wait for the UAVBot and UGVHitListener to connect to the server
 while not uav_bot.connected and not listener.connected:
     time.sleep(1)
-
-# The program can continue running here while the bots are connected to the IRC channel
 
 print("Made it past the IRC bot initialization")
 
